@@ -239,6 +239,8 @@ static inline void update_avg(u64 *avg, u64 sample)
 	*avg += diff / 8;
 }
 
+#define cap_scale(v, s) ((v)*(s) >> SCHED_CAPACITY_SHIFT)
+
 /*
  * Tells if entity @a should preempt entity @b.
  */
