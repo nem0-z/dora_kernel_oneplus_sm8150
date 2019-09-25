@@ -622,12 +622,11 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 		goto Enable_cpus;
 	}
 
-	arch_suspend_disable_irqs();
-	BUG_ON(!irqs_disabled());
-
 #ifdef CONFIG_PM_SLEEP_MONITOR
 	stop_suspend_mon();
 #endif
+	arch_suspend_disable_irqs();
+	BUG_ON(!irqs_disabled());
 
 	if (check_touchirq_triggerd()) {
 		pr_err("[TP]touchpanel irq status is low\n");
@@ -651,12 +650,12 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 	}
 Enable_irq:
 
+	arch_suspend_enable_irqs();
+	BUG_ON(irqs_disabled());
+
 #ifdef CONFIG_PM_SLEEP_MONITOR
 	start_suspend_mon();
 #endif
-
-	arch_suspend_enable_irqs();
-	BUG_ON(irqs_disabled());
 
  Enable_cpus:
 	enable_nonboot_cpus();
