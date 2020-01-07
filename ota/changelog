@@ -1,0 +1,24 @@
+## Build Information
+```
+Kernel: Dora Kernel
+Type: Stable
+Device: OnePlus 7/T/Pro
+Compiler: Proton Clang 13.0.0
+Branch: master
+Build Number: 1.2
+```
+## Changelog
+```
+-1.2:
+-Merge latest kernel tag from CAF: ("LE.UM.4.4.2.r1-03800-SDX55") 
+-Switch to VBSWAP instead of ZRAM (RAM boost off on OOS)
+-zsmalloc/vmalloc/ZSWAP bringup and backports
+-Fix broken proximity sensors on OP7/T variants
+-Scheduler and PID map optimizations from Sultan
+-Revert removal of LB_BIAS code
+-Enable support for IORap
+-Block few more userspace HAL's on OOS11
+-More crypto code backports
+-Integrate OTA updates in Franco's Karamel Manager (link for the json: https://raw.githubusercontent.com/nem0-z/dora_kernel_oneplus_sm8150/master/ota/update.json)
+
+```
