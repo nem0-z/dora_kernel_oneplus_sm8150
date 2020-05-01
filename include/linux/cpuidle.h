@@ -278,8 +278,8 @@ static inline int cpuidle_register_governor(struct cpuidle_governor *gov)
 })
 
 #ifdef CONFIG_SMP
-void cpuidle_set_idle_cpu(unsigned int cpu);
-void cpuidle_clear_idle_cpu(unsigned int cpu);
+static void cpuidle_set_idle_cpu(unsigned int cpu);
+static void cpuidle_clear_idle_cpu(unsigned int cpu);
 #else
 static inline void cpuidle_set_idle_cpu(unsigned int cpu) { }
 static inline void cpuidle_clear_idle_cpu(unsigned int cpu) { }
