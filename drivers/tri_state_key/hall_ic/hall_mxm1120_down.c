@@ -1015,7 +1015,7 @@ static int m1120_enable_irq(bool enable)
 	return 0;
 }
 
-static int m1120_clear_irq()
+static int m1120_clear_irq(void)
 {
 	printk(KERN_INFO "  %s", __func__);
 	if(p_m1120_data == NULL) {
@@ -1027,7 +1027,7 @@ static int m1120_clear_irq()
 	return 0;
 }
 
-static int m1120_get_irq_state()
+static int m1120_get_irq_state(void)
 {
 	printk(KERN_INFO "  %s", __func__);
 	if(p_m1120_data == NULL) {
@@ -1035,7 +1035,7 @@ static int m1120_get_irq_state()
 		return -EINVAL;
 	}
 
-	return ((p_m1120_data->reg.map.intsrs & M1120_DETECTION_MODE_INTERRUPT) ? 1 : 0);   
+	return ((p_m1120_data->reg.map.intsrs & M1120_DETECTION_MODE_INTERRUPT) ? 1 : 0);
 }
 
 static bool m1120_update_threshold(int position, short lowthd, short highthd)
@@ -1073,7 +1073,7 @@ static bool m1120_update_threshold(int position, short lowthd, short highthd)
 		return true;
 	}
 
-	return true;  
+	return true;
 }
 
 static void m1120_dump_reg(u8* buf)
@@ -1106,7 +1106,7 @@ static void m1120_dump_reg(u8* buf)
 	return;
 }
 
-static bool m1120_is_power_on()
+static bool m1120_is_power_on(void)
 {
 	printk(KERN_INFO "  %s", __func__);
 	if (p_m1120_data == NULL) {
@@ -1173,7 +1173,7 @@ static int m1120_set_detection_mode_1(u8 mode)
 		}
 	}
 
-	return 0;    
+	return 0;
 }
 
 static int m1120_set_reg_1(int reg, int val)
@@ -1188,7 +1188,7 @@ static int m1120_set_reg_1(int reg, int val)
 	}
 
 	m1120_i2c_write_block(p_m1120_data, (u8)reg, &data,1);
-	return 0;  
+	return 0;
 }
 
 struct dhall_operations  m1120_downs_ops = {
