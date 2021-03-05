@@ -684,7 +684,7 @@ copy_err:
 static ssize_t codec_debug_read(struct file *file, char __user *ubuf,
 				size_t count, loff_t *ppos)
 {
-	char lbuf[8];
+	char lbuf[8] = {};
 	char *access_str = file->private_data;
 	ssize_t ret_cnt;
 
@@ -771,7 +771,7 @@ static ssize_t codec_debug_write(struct file *filp,
 	const char __user *ubuf, size_t cnt, loff_t *ppos)
 {
 	char *access_str = filp->private_data;
-	char lbuf[32];
+	char lbuf[32] = {};
 	int rc;
 	long int param[5];
 
