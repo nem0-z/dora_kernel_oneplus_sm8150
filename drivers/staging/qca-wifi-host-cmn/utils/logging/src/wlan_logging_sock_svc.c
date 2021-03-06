@@ -606,9 +606,9 @@ err:
 	 * Free old skb in case or error before assigning new skb
 	 * to the free list.
 	 */
-	if (free_old_skb)
+	if (free_old_skb) {
 		dev_kfree_skb(pstats_msg->skb);
-
+        }
 		spin_lock_irqsave(&gwlan_logging.pkt_stats_lock, flags);
 		pstats_msg->skb = skb_new;
 		list_add_tail(&pstats_msg->node,
