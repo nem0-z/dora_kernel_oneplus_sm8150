@@ -905,7 +905,7 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 
 	if (panel->is_hbm_enabled) {
 		hbm_finger_print = true;
-		pr_err("HBM is enabled\n");
+		pr_debug("HBM is enabled\n");
 		return 0;
 	}
 
@@ -943,7 +943,7 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		}
 
 		rc = mipi_dsi_dcs_set_display_brightness_samsung(dsi, bl_lvl);
-		pr_err("backlight = %d\n", bl_lvl);
+		pr_debug("backlight = %d\n", bl_lvl);
 		cur_backlight = bl_lvl;
 		cur_fps = mode_fps;
 		cur_h = panel->cur_mode->timing.h_active;
@@ -5421,7 +5421,7 @@ int dsi_panel_set_hbm_brightness(struct dsi_panel *panel, int level)
 
 	if (panel->is_hbm_enabled) {
 		hbm_finger_print = true;
-		pr_err("HBM is enabled\n");
+		pr_debug("HBM is enabled\n");
 		return 0;
 	}
 
