@@ -624,7 +624,7 @@ static void pm_suspend_marker(char *annotation)
 
 	getnstimeofday(&ts);
 	rtc_time_to_tm(ts.tv_sec, &tm);
-	pr_info("PM: suspend %s %d-%02d-%02d %02d:%02d:%02d.%09lu UTC\n",
+	pm_pr_dbg("PM: suspend %s %d-%02d-%02d %02d:%02d:%02d.%09lu UTC\n",
 		annotation, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 		tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
 }
@@ -644,14 +644,14 @@ int pm_suspend(suspend_state_t state)
 		return -EINVAL;
 
 	qcom_smem_state_update_bits(qstate, AWAKE_BIT, 0);
-	pr_err("%s: PM_SUSPEND_PREPARE smp2p_change_state", __func__); 
+	pm_pr_dbg("%s: PM_SUSPEND_PREPARE smp2p_change_state", __func__); 
 
 	pm_suspend_marker("entry");
-	pr_info("suspend entry (%s)\n", mem_sleep_labels[state]);
+	pm_pr_dbg("suspend entry (%s)\n", mem_sleep_labels[state]);
 	error = enter_state(state);
 
 	qcom_smem_state_update_bits(qstate, AWAKE_BIT, AWAKE_BIT);
-	pr_err("%s: PM_POST_SUSPEND smp2p_change_state", __func__);
+	pm_pr_dbg("%s: PM_POST_SUSPEND smp2p_change_state", __func__);
 
 	if (error) {
 		suspend_stats.fail++;
@@ -660,7 +660,7 @@ int pm_suspend(suspend_state_t state)
 		suspend_stats.success++;
 	}
 	pm_suspend_marker("exit");
-	pr_info("suspend exit\n");
+	pm_pr_dbg("suspend exit\n");
 	measure_wake_up_time();
 	return error;
 }
