@@ -15,7 +15,6 @@
 *.bz2
 *.c.[012]*.*
 *.dtb
-*.dtbo
 *.dtb.S
 *.dwo
 *.elf
@@ -132,7 +131,6 @@ kernel/configs/android-*.cfg
 #
 Android.bp
 
-kernelzip/
 *.log
 *.txt
 *.py
