@@ -781,7 +781,7 @@ static int ieee80211_init_cipher_suites(struct ieee80211_local *local)
 		if (have_mfp)
 			n_suites += 4;
 
-		suites = kmalloc(sizeof(u32) * n_suites, GFP_KERNEL);
+		suites = kmalloc_array(n_suites, sizeof(u32), GFP_KERNEL);
 		if (!suites)
 			return -ENOMEM;
 
@@ -913,8 +913,19 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 			continue;
 
 		if (!dflt_chandef.chan) {
+			/*
+			 * Assign the first enabled channel to dflt_chandef
+			 * from the list of channels
+			 */
+			for (i = 0; i < sband->n_channels; i++)
+				if (!(sband->channels[i].flags &
+						IEEE80211_CHAN_DISABLED))
+					break;
+			/* if none found then use the first anyway */
+			if (i == sband->n_channels)
+				i = 0;
 			cfg80211_chandef_create(&dflt_chandef,
-						&sband->channels[0],
+						&sband->channels[i],
 						NL80211_CHAN_NO_HT);
 			/* init channel we're on */
 			if (!local->use_chanctx && !local->_oper_chandef.chan) {

@@ -567,7 +567,6 @@ static void gsi_process_chan(struct gsi_xfer_compl_evt *evt,
 	if (callback) {
 		if (atomic_read(&ch_ctx->poll_mode)) {
 			GSIERR("Calling client callback in polling mode\n");
-			WARN_ON(1);
 		}
 		ch_ctx->props.xfer_cb(notify);
 	}
@@ -4600,7 +4599,7 @@ static int msm_gsi_probe(struct platform_device *pdev)
 	gsi_ctx->ipc_logbuf = ipc_log_context_create(GSI_IPC_LOG_PAGES,
 		"gsi", 0);
 	if (gsi_ctx->ipc_logbuf == NULL)
-		GSIERR("failed to create IPC log, continue...\n");
+		GSIDBG("failed to create IPC log, continue...\n");
 
 	gsi_ctx->dev = dev;
 	init_completion(&gsi_ctx->gen_ee_cmd_compl);

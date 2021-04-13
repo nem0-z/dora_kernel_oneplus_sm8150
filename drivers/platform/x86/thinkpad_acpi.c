@@ -3964,9 +3964,15 @@ static bool hotkey_notify_6xxx(const u32 hkey,
 
 	case TP_HKEY_EV_KEY_NUMLOCK:
 	case TP_HKEY_EV_KEY_FN:
-	case TP_HKEY_EV_KEY_FN_ESC:
 		/* key press events, we just ignore them as long as the EC
 		 * is still reporting them in the normal keyboard stream */
+		*send_acpi_ev = false;
+		*ignore_acpi_ev = true;
+		return true;
+
+	case TP_HKEY_EV_KEY_FN_ESC:
+		/* Get the media key status to foce the status LED to update */
+		acpi_evalf(hkey_handle, NULL, "GMKS", "v");
 		*send_acpi_ev = false;
 		*ignore_acpi_ev = true;
 		return true;
@@ -5966,7 +5972,7 @@ static int __init led_init(struct ibm_init_struct *iibm)
 	if (led_supported == TPACPI_LED_NONE)
 		return 1;
 
-	tpacpi_leds = kzalloc(sizeof(*tpacpi_leds) * TPACPI_LED_NUMLEDS,
+	tpacpi_leds = kcalloc(TPACPI_LED_NUMLEDS, sizeof(*tpacpi_leds),
 			      GFP_KERNEL);
 	if (!tpacpi_leds) {
 		pr_err("Out of memory for LED data\n");

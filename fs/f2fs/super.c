@@ -894,21 +894,7 @@ static int parse_options(struct super_block *sb, char *options, bool is_remount)
 			kfree(name);
 			break;
 		case Opt_fsync:
-			name = match_strdup(&args[0]);
-			if (!name)
-				return -ENOMEM;
-			if (!strcmp(name, "posix")) {
-				F2FS_OPTION(sbi).fsync_mode = FSYNC_MODE_POSIX;
-			} else if (!strcmp(name, "strict")) {
-				F2FS_OPTION(sbi).fsync_mode = FSYNC_MODE_STRICT;
-			} else if (!strcmp(name, "nobarrier")) {
-				F2FS_OPTION(sbi).fsync_mode =
-							FSYNC_MODE_NOBARRIER;
-			} else {
-				kfree(name);
-				return -EINVAL;
-			}
-			kfree(name);
+			f2fs_info(sbi, "changing fsync mode not supported");
 			break;
 		case Opt_test_dummy_encryption:
 			ret = f2fs_set_test_dummy_encryption(sb, p, &args[0],
@@ -1427,6 +1413,7 @@ static void f2fs_put_super(struct super_block *sb)
 	 * above failed with error.
 	 */
 	f2fs_destroy_stats(sbi);
+	f2fs_gc_sbi_list_del(sbi);
 
 	/* destroy f2fs internal modules */
 	f2fs_destroy_node_manager(sbi);
@@ -1831,7 +1818,7 @@ static void default_options(struct f2fs_sb_info *sbi)
 	F2FS_OPTION(sbi).inline_xattr_size = DEFAULT_INLINE_XATTR_ADDRS;
 	F2FS_OPTION(sbi).whint_mode = WHINT_MODE_OFF;
 	F2FS_OPTION(sbi).alloc_mode = ALLOC_MODE_DEFAULT;
-	F2FS_OPTION(sbi).fsync_mode = FSYNC_MODE_POSIX;
+	F2FS_OPTION(sbi).fsync_mode = FSYNC_MODE_NOBARRIER;
 #ifdef CONFIG_FS_ENCRYPTION
 	F2FS_OPTION(sbi).inlinecrypt = false;
 #endif
@@ -3907,6 +3894,8 @@ try_onemore:
 		goto free_stats;
 	}
 
+	f2fs_gc_sbi_list_add(sbi);
+
 	/* read root inode and dentry */
 	root = f2fs_iget(sb, F2FS_ROOT_INO(sbi));
 	if (IS_ERR(root)) {
@@ -4060,6 +4049,7 @@ free_node_inode:
 	iput(sbi->node_inode);
 	sbi->node_inode = NULL;
 free_stats:
+	f2fs_gc_sbi_list_del(sbi);
 	f2fs_destroy_stats(sbi);
 free_nm:
 	f2fs_destroy_node_manager(sbi);
@@ -4225,6 +4215,9 @@ static int __init init_f2fs_fs(void)
 	err = f2fs_init_compress_cache();
 	if (err)
 		goto free_compress_mempool;
+
+	f2fs_init_rapid_gc();
+
 	return 0;
 free_compress_mempool:
 	f2fs_destroy_compress_mempool();
@@ -4259,6 +4252,7 @@ fail:
 
 static void __exit exit_f2fs_fs(void)
 {
+	f2fs_destroy_rapid_gc();
 	f2fs_destroy_compress_cache();
 	f2fs_destroy_compress_mempool();
 	f2fs_destroy_bioset();

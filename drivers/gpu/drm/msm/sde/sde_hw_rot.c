@@ -66,7 +66,7 @@ static struct sde_rot_cfg *_rot_offset(enum sde_rot rot,
  * @ptr: private pointer to rotator platform device
  * return: None
  */
-static void _sde_hw_rot_reg_dump(void *ptr)
+static void __maybe_unused _sde_hw_rot_reg_dump(void *ptr)
 {
 	sde_rotator_inline_reg_dump((struct platform_device *) ptr);
 }
@@ -87,10 +87,6 @@ static int sde_hw_rot_start(struct sde_hw_rot *hw)
 	}
 
 	pdev = hw->caps->pdev;
-
-	rc = sde_dbg_reg_register_cb(hw->name, _sde_hw_rot_reg_dump, pdev);
-	if (rc)
-		SDE_ERROR("failed to register debug dump %d\n", rc);
 
 	hw->rot_ctx = sde_rotator_inline_open(pdev);
 	if (IS_ERR_OR_NULL(hw->rot_ctx)) {
@@ -116,9 +112,6 @@ static void sde_hw_rot_stop(struct sde_hw_rot *hw)
 
 	sde_rotator_inline_release(hw->rot_ctx);
 	hw->rot_ctx = NULL;
-
-	sde_dbg_reg_unregister_cb(hw->name, _sde_hw_rot_reg_dump,
-			hw->caps->pdev);
 }
 
 /**
@@ -766,8 +759,8 @@ static const struct sde_format_extended *sde_hw_rot_get_format_caps(
 	sde_rotator_inline_get_pixfmt_caps(pdev, true, v4l_pixfmts, len);
 
 	/* allocate one more to indicate termination */
-	drm_pixfmts = kzalloc((len + 1) * sizeof(struct sde_format_extended),
-			GFP_KERNEL);
+	drm_pixfmts = kcalloc(len + 1, sizeof(struct sde_format_extended),
+			      GFP_KERNEL);
 	if (!drm_pixfmts)
 		goto done;
 

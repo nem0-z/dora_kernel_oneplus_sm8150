@@ -3708,8 +3708,9 @@ static int msm_pcie_get_resources(struct msm_pcie_dev_t *dev,
 	cnt = of_property_count_elems_of_size((&pdev->dev)->of_node,
 			"max-clock-frequency-hz", sizeof(u32));
 	if (cnt > 0) {
-		clkfreq = kzalloc((MSM_PCIE_MAX_CLK + MSM_PCIE_MAX_PIPE_CLK) *
-					sizeof(*clkfreq), GFP_KERNEL);
+		clkfreq = kcalloc(MSM_PCIE_MAX_CLK + MSM_PCIE_MAX_PIPE_CLK,
+				  sizeof(*clkfreq),
+				  GFP_KERNEL);
 		if (!clkfreq) {
 			PCIE_ERR(dev, "PCIe: memory alloc failed for RC%d\n",
 					dev->rc_idx);
@@ -3905,8 +3906,9 @@ static int msm_pcie_get_resources(struct msm_pcie_dev_t *dev,
 			"iommu-map", (u32 *)map, size / sizeof(u32));
 
 		dev->sid_info_len = map_len;
-		dev->sid_info = devm_kzalloc(&pdev->dev,
-			dev->sid_info_len * sizeof(*dev->sid_info), GFP_KERNEL);
+		dev->sid_info = devm_kcalloc(&pdev->dev,
+			dev->sid_info_len, sizeof(*dev->sid_info),
+			GFP_KERNEL);
 		if (!dev->sid_info) {
 			devm_kfree(&pdev->dev, map);
 			ret = -ENOMEM;
@@ -6808,7 +6810,9 @@ static struct platform_driver msm_pcie_driver = {
 static int __init pcie_init(void)
 {
 	int ret = 0, i;
+#ifdef CONFIG_IPC_LOGGING
 	char rc_name[MAX_RC_NAME_LEN];
+#endif
 
 	pr_alert("pcie:%s.\n", __func__);
 
@@ -6816,6 +6820,7 @@ static int __init pcie_init(void)
 	mutex_init(&pcie_drv.drv_lock);
 
 	for (i = 0; i < MAX_RC_NUM; i++) {
+#ifdef CONFIG_IPC_LOGGING
 		snprintf(rc_name, MAX_RC_NAME_LEN, "pcie%d-short", i);
 		msm_pcie_dev[i].ipc_log =
 			ipc_log_context_create(PCIE_LOG_PAGES, rc_name, 0);
@@ -6846,6 +6851,7 @@ static int __init pcie_init(void)
 			PCIE_DBG(&msm_pcie_dev[i],
 				"PCIe IPC logging %s is enable for RC%d\n",
 				rc_name, i);
+#endif
 		spin_lock_init(&msm_pcie_dev[i].cfg_lock);
 		msm_pcie_dev[i].cfg_access = true;
 		mutex_init(&msm_pcie_dev[i].enumerate_lock);

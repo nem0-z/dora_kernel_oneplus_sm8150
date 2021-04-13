@@ -799,7 +799,7 @@ int elliptic_driver_init(void)
     }
 
 	elliptic_devices = (struct elliptic_device *)
-		kzalloc(sizeof(struct elliptic_device) * ELLIPTIC_NUM_DEVICES,
+		kcalloc(sizeof(struct elliptic_device), ELLIPTIC_NUM_DEVICES,
 			GFP_KERNEL);
 
 	if (elliptic_devices == NULL) {

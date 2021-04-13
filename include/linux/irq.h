@@ -152,7 +152,6 @@ struct irq_common_data {
 	void			*handler_data;
 	struct msi_desc		*msi_desc;
 	cpumask_var_t		affinity;
-	cpumask_var_t		old_affinity;
 #ifdef CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK
 	cpumask_var_t		effective_affinity;
 #endif
@@ -215,6 +214,7 @@ struct irq_data {
  * IRQD_DEFAULT_TRIGGER_SET	- Expected trigger already been set
  * IRQD_AFFINITY_ON_ACTIVATE	- Affinity is set on activation. Don't call
  *				  irq_chip::irq_set_affinity() when deactivated.
+ * IRQD_PERF_CRITICAL		- IRQ is performance-critical
  */
 enum {
 	IRQD_TRIGGER_MASK		= 0xf,
@@ -236,6 +236,7 @@ enum {
 	IRQD_MANAGED_SHUTDOWN		= (1 << 23),
 	IRQD_SINGLE_TARGET		= (1 << 24),
 	IRQD_DEFAULT_TRIGGER_SET	= (1 << 25),
+	IRQD_PERF_CRITICAL		= (1 << 26),
 	IRQD_AFFINITY_ON_ACTIVATE	= (1 << 29),
 };
 

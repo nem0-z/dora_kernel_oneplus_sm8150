@@ -1664,8 +1664,8 @@ static int tfa98xx_create_controls(struct tfa98xx *tfa98xx)
 			nr_controls++; /* Playback Volume control */
 	}
 
-	tfa98xx_controls = devm_kzalloc(tfa98xx->codec->dev,
-			nr_controls * sizeof(tfa98xx_controls[0]), GFP_KERNEL);
+	tfa98xx_controls = devm_kcalloc(tfa98xx->codec->dev,
+			nr_controls, sizeof(tfa98xx_controls[0]), GFP_KERNEL);
 	if (!tfa98xx_controls)
 		return -ENOMEM;
 
@@ -2959,7 +2959,6 @@ static int tfa98xx_mute(struct snd_soc_dai *dai, int mute, int stream)
 		cancel_delayed_work_sync(&tfa98xx->monitor_work);
 
 		cancel_delayed_work_sync(&tfa98xx->init_work);
-
 
 		pr_debug("%s: tfa98xx->dsp_fw_state = %d\n", __func__, tfa98xx->dsp_fw_state);
 

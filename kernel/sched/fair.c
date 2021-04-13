@@ -955,7 +955,7 @@ update_stats_wait_start(struct cfs_rq *cfs_rq, struct sched_entity *se)
 	    likely(wait_start > prev_wait_start))
 		wait_start -= prev_wait_start;
 
-	schedstat_set(se->statistics.wait_start, wait_start);
+	__schedstat_set(se->statistics.wait_start, wait_start);
 }
 
 static inline void
@@ -977,17 +977,17 @@ update_stats_wait_end(struct cfs_rq *cfs_rq, struct sched_entity *se)
 			 * time stamp can be adjusted to accumulate wait time
 			 * prior to migration.
 			 */
-			schedstat_set(se->statistics.wait_start, delta);
+			__schedstat_set(se->statistics.wait_start, delta);
 			return;
 		}
 		trace_sched_stat_wait(p, delta);
 	}
 
-	schedstat_set(se->statistics.wait_max,
+	__schedstat_set(se->statistics.wait_max,
 		      max(schedstat_val(se->statistics.wait_max), delta));
-	schedstat_inc(se->statistics.wait_count);
-	schedstat_add(se->statistics.wait_sum, delta);
-	schedstat_set(se->statistics.wait_start, 0);
+	__schedstat_inc(se->statistics.wait_count);
+	__schedstat_add(se->statistics.wait_sum, delta);
+	__schedstat_set(se->statistics.wait_start, 0);
 }
 
 static inline void
@@ -1012,10 +1012,10 @@ update_stats_enqueue_sleeper(struct cfs_rq *cfs_rq, struct sched_entity *se)
 			delta = 0;
 
 		if (unlikely(delta > schedstat_val(se->statistics.sleep_max)))
-			schedstat_set(se->statistics.sleep_max, delta);
+			__schedstat_set(se->statistics.sleep_max, delta);
 
-		schedstat_set(se->statistics.sleep_start, 0);
-		schedstat_add(se->statistics.sum_sleep_runtime, delta);
+		__schedstat_set(se->statistics.sleep_start, 0);
+		__schedstat_add(se->statistics.sum_sleep_runtime, delta);
 
 		if (tsk) {
 			account_scheduler_latency(tsk, delta >> 10, 1);
@@ -1029,15 +1029,15 @@ update_stats_enqueue_sleeper(struct cfs_rq *cfs_rq, struct sched_entity *se)
 			delta = 0;
 
 		if (unlikely(delta > schedstat_val(se->statistics.block_max)))
-			schedstat_set(se->statistics.block_max, delta);
+			__schedstat_set(se->statistics.block_max, delta);
 
-		schedstat_set(se->statistics.block_start, 0);
-		schedstat_add(se->statistics.sum_sleep_runtime, delta);
+		__schedstat_set(se->statistics.block_start, 0);
+		__schedstat_add(se->statistics.sum_sleep_runtime, delta);
 
 		if (tsk) {
 			if (tsk->in_iowait) {
-				schedstat_add(se->statistics.iowait_sum, delta);
-				schedstat_inc(se->statistics.iowait_count);
+				__schedstat_add(se->statistics.iowait_sum, delta);
+				__schedstat_inc(se->statistics.iowait_count);
 				trace_sched_stat_iowait(tsk, delta);
 			}
 
@@ -1097,10 +1097,10 @@ update_stats_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
 		struct task_struct *tsk = task_of(se);
 
 		if (tsk->state & TASK_INTERRUPTIBLE)
-			schedstat_set(se->statistics.sleep_start,
+			__schedstat_set(se->statistics.sleep_start,
 				      rq_clock(rq_of(cfs_rq)));
 		if (tsk->state & TASK_UNINTERRUPTIBLE)
-			schedstat_set(se->statistics.block_start,
+			__schedstat_set(se->statistics.block_start,
 				      rq_clock(rq_of(cfs_rq)));
 	}
 }
@@ -3842,10 +3842,21 @@ util_est_dequeue(struct cfs_rq *cfs_rq, struct task_struct *p, bool task_sleep)
 		return;
 
 	/*
+	 * Reset EWMA on utilization increases, the moving average is used only
+	 * to smooth utilization decreases.
+	 */
+	ue.enqueued = (task_util(p) | UTIL_AVG_UNCHANGED);
+	if (sched_feat(UTIL_EST_FASTUP)) {
+		if (ue.ewma < ue.enqueued) {
+			ue.ewma = ue.enqueued;
+			goto done;
+		}
+	}
+
+	/*
 	 * Skip update of task's estimated utilization when its EWMA is
 	 * already ~1% close to its last activation value.
 	 */
-	ue.enqueued = (task_util(p) | UTIL_AVG_UNCHANGED);
 	last_ewma_diff = ue.enqueued - ue.ewma;
 	if (within_margin(last_ewma_diff, (SCHED_CAPACITY_SCALE / 100)))
 		return;
@@ -3870,6 +3881,7 @@ util_est_dequeue(struct cfs_rq *cfs_rq, struct task_struct *p, bool task_sleep)
 	ue.ewma <<= UTIL_EST_WEIGHT_SHIFT;
 	ue.ewma  += last_ewma_diff;
 	ue.ewma >>= UTIL_EST_WEIGHT_SHIFT;
+done:
 	WRITE_ONCE(p->se.avg.util_est, ue);
 
 	trace_sched_util_est_task(p, &p->se.avg);
@@ -4682,11 +4694,10 @@ void unthrottle_cfs_rq(struct cfs_rq *cfs_rq)
 		resched_curr(rq);
 }
 
-static u64 distribute_cfs_runtime(struct cfs_bandwidth *cfs_b, u64 remaining)
+static void distribute_cfs_runtime(struct cfs_bandwidth *cfs_b)
 {
 	struct cfs_rq *cfs_rq;
-	u64 runtime;
-	u64 starting_runtime = remaining;
+	u64 runtime, remaining = 1;
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(cfs_rq, &cfs_b->throttled_cfs_rq,
@@ -4701,10 +4712,13 @@ static u64 distribute_cfs_runtime(struct cfs_bandwidth *cfs_b, u64 remaining)
 		/* By the above check, this should never be true */
 		SCHED_WARN_ON(cfs_rq->runtime_remaining > 0);
 
+		raw_spin_lock(&cfs_b->lock);
 		runtime = -cfs_rq->runtime_remaining + 1;
-		if (runtime > remaining)
-			runtime = remaining;
-		remaining -= runtime;
+		if (runtime > cfs_b->runtime)
+			runtime = cfs_b->runtime;
+		cfs_b->runtime -= runtime;
+		remaining = cfs_b->runtime;
+		raw_spin_unlock(&cfs_b->lock);
 
 		cfs_rq->runtime_remaining += runtime;
 
@@ -4719,8 +4733,6 @@ next:
 			break;
 	}
 	rcu_read_unlock();
-
-	return starting_runtime - remaining;
 }
 
 /*
@@ -4731,7 +4743,6 @@ next:
  */
 static int do_sched_cfs_period_timer(struct cfs_bandwidth *cfs_b, int overrun)
 {
-	u64 runtime;
 	int throttled;
 
 	/* no need to continue the timer with no bandwidth constraint */
@@ -4760,24 +4771,17 @@ static int do_sched_cfs_period_timer(struct cfs_bandwidth *cfs_b, int overrun)
 	cfs_b->nr_throttled += overrun;
 
 	/*
-	 * This check is repeated as we are holding onto the new bandwidth while
-	 * we unthrottle. This can potentially race with an unthrottled group
-	 * trying to acquire new bandwidth from the global pool. This can result
-	 * in us over-using our runtime if it is all used during this loop, but
-	 * only by limited amounts in that extreme case.
+	 * This check is repeated as we release cfs_b->lock while we unthrottle.
 	 */
 	while (throttled && cfs_b->runtime > 0 && !cfs_b->distribute_running) {
-		runtime = cfs_b->runtime;
 		cfs_b->distribute_running = 1;
 		raw_spin_unlock(&cfs_b->lock);
 		/* we can't nest cfs_b->lock while distributing bandwidth */
-		runtime = distribute_cfs_runtime(cfs_b, runtime);
+		distribute_cfs_runtime(cfs_b);
 		raw_spin_lock(&cfs_b->lock);
 
 		cfs_b->distribute_running = 0;
 		throttled = !list_empty(&cfs_b->throttled_cfs_rq);
-
-		cfs_b->runtime -= min(runtime, cfs_b->runtime);
 	}
 
 	/*
@@ -4904,10 +4908,9 @@ static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
 	if (!runtime)
 		return;
 
-	runtime = distribute_cfs_runtime(cfs_b, runtime);
+	distribute_cfs_runtime(cfs_b);
 
 	raw_spin_lock(&cfs_b->lock);
-	cfs_b->runtime -= min(runtime, cfs_b->runtime);
 	cfs_b->distribute_running = 0;
 	raw_spin_unlock(&cfs_b->lock);
 }
@@ -5476,269 +5479,10 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 DEFINE_PER_CPU(cpumask_var_t, load_balance_mask);
 DEFINE_PER_CPU(cpumask_var_t, select_idle_mask);
 
-#ifdef CONFIG_NO_HZ_COMMON
-/*
- * per rq 'load' arrray crap; XXX kill this.
- */
-
-/*
- * The exact cpuload calculated at every tick would be:
- *
- *   load' = (1 - 1/2^i) * load + (1/2^i) * cur_load
- *
- * If a cpu misses updates for n ticks (as it was idle) and update gets
- * called on the n+1-th tick when cpu may be busy, then we have:
- *
- *   load_n   = (1 - 1/2^i)^n * load_0
- *   load_n+1 = (1 - 1/2^i)   * load_n + (1/2^i) * cur_load
- *
- * decay_load_missed() below does efficient calculation of
- *
- *   load' = (1 - 1/2^i)^n * load
- *
- * Because x^(n+m) := x^n * x^m we can decompose any x^n in power-of-2 factors.
- * This allows us to precompute the above in said factors, thereby allowing the
- * reduction of an arbitrary n in O(log_2 n) steps. (See also
- * fixed_power_int())
- *
- * The calculation is approximated on a 128 point scale.
- */
-#define DEGRADE_SHIFT		7
-
-static const u8 degrade_zero_ticks[CPU_LOAD_IDX_MAX] = {0, 8, 32, 64, 128};
-static const u8 degrade_factor[CPU_LOAD_IDX_MAX][DEGRADE_SHIFT + 1] = {
-	{   0,   0,  0,  0,  0,  0, 0, 0 },
-	{  64,  32,  8,  0,  0,  0, 0, 0 },
-	{  96,  72, 40, 12,  1,  0, 0, 0 },
-	{ 112,  98, 75, 43, 15,  1, 0, 0 },
-	{ 120, 112, 98, 76, 45, 16, 2, 0 }
-};
-
-/*
- * Update cpu_load for any missed ticks, due to tickless idle. The backlog
- * would be when CPU is idle and so we just decay the old load without
- * adding any new load.
- */
-static unsigned long
-decay_load_missed(unsigned long load, unsigned long missed_updates, int idx)
-{
-	int j = 0;
-
-	if (!missed_updates)
-		return load;
-
-	if (missed_updates >= degrade_zero_ticks[idx])
-		return 0;
-
-	if (idx == 1)
-		return load >> missed_updates;
-
-	while (missed_updates) {
-		if (missed_updates % 2)
-			load = (load * degrade_factor[idx][j]) >> DEGRADE_SHIFT;
-
-		missed_updates >>= 1;
-		j++;
-	}
-	return load;
-}
-#endif /* CONFIG_NO_HZ_COMMON */
-
-/**
- * __cpu_load_update - update the rq->cpu_load[] statistics
- * @this_rq: The rq to update statistics for
- * @this_load: The current load
- * @pending_updates: The number of missed updates
- *
- * Update rq->cpu_load[] statistics. This function is usually called every
- * scheduler tick (TICK_NSEC).
- *
- * This function computes a decaying average:
- *
- *   load[i]' = (1 - 1/2^i) * load[i] + (1/2^i) * load
- *
- * Because of NOHZ it might not get called on every tick which gives need for
- * the @pending_updates argument.
- *
- *   load[i]_n = (1 - 1/2^i) * load[i]_n-1 + (1/2^i) * load_n-1
- *             = A * load[i]_n-1 + B ; A := (1 - 1/2^i), B := (1/2^i) * load
- *             = A * (A * load[i]_n-2 + B) + B
- *             = A * (A * (A * load[i]_n-3 + B) + B) + B
- *             = A^3 * load[i]_n-3 + (A^2 + A + 1) * B
- *             = A^n * load[i]_0 + (A^(n-1) + A^(n-2) + ... + 1) * B
- *             = A^n * load[i]_0 + ((1 - A^n) / (1 - A)) * B
- *             = (1 - 1/2^i)^n * (load[i]_0 - load) + load
- *
- * In the above we've assumed load_n := load, which is true for NOHZ_FULL as
- * any change in load would have resulted in the tick being turned back on.
- *
- * For regular NOHZ, this reduces to:
- *
- *   load[i]_n = (1 - 1/2^i)^n * load[i]_0
- *
- * see decay_load_misses(). For NOHZ_FULL we get to subtract and add the extra
- * term.
- */
-static void cpu_load_update(struct rq *this_rq, unsigned long this_load,
-			    unsigned long pending_updates)
-{
-	unsigned long __maybe_unused tickless_load = this_rq->cpu_load[0];
-	int i, scale;
-
-	this_rq->nr_load_updates++;
-
-	/* Update our load: */
-	this_rq->cpu_load[0] = this_load; /* Fasttrack for idx 0 */
-	for (i = 1, scale = 2; i < CPU_LOAD_IDX_MAX; i++, scale += scale) {
-		unsigned long old_load, new_load;
-
-		/* scale is effectively 1 << i now, and >> i divides by scale */
-
-		old_load = this_rq->cpu_load[i];
-#ifdef CONFIG_NO_HZ_COMMON
-		old_load = decay_load_missed(old_load, pending_updates - 1, i);
-		if (tickless_load) {
-			old_load -= decay_load_missed(tickless_load, pending_updates - 1, i);
-			/*
-			 * old_load can never be a negative value because a
-			 * decayed tickless_load cannot be greater than the
-			 * original tickless_load.
-			 */
-			old_load += tickless_load;
-		}
-#endif
-		new_load = this_load;
-		/*
-		 * Round up the averaging division if load is increasing. This
-		 * prevents us from getting stuck on 9 if the load is 10, for
-		 * example.
-		 */
-		if (new_load > old_load)
-			new_load += scale - 1;
-
-		this_rq->cpu_load[i] = (old_load * (scale - 1) + new_load) >> i;
-	}
-
-	sched_avg_update(this_rq);
-}
-
 /* Used instead of source_load when we know the type == 0 */
 static unsigned long weighted_cpuload(struct rq *rq)
 {
 	return cfs_rq_runnable_load_avg(&rq->cfs);
-}
-
-#ifdef CONFIG_NO_HZ_COMMON
-/*
- * There is no sane way to deal with nohz on smp when using jiffies because the
- * cpu doing the jiffies update might drift wrt the cpu doing the jiffy reading
- * causing off-by-one errors in observed deltas; {0,2} instead of {1,1}.
- *
- * Therefore we need to avoid the delta approach from the regular tick when
- * possible since that would seriously skew the load calculation. This is why we
- * use cpu_load_update_periodic() for CPUs out of nohz. However we'll rely on
- * jiffies deltas for updates happening while in nohz mode (idle ticks, idle
- * loop exit, nohz_idle_balance, nohz full exit...)
- *
- * This means we might still be one tick off for nohz periods.
- */
-
-static void cpu_load_update_nohz(struct rq *this_rq,
-				 unsigned long curr_jiffies,
-				 unsigned long load)
-{
-	unsigned long pending_updates;
-
-	pending_updates = curr_jiffies - this_rq->last_load_update_tick;
-	if (pending_updates) {
-		this_rq->last_load_update_tick = curr_jiffies;
-		/*
-		 * In the regular NOHZ case, we were idle, this means load 0.
-		 * In the NOHZ_FULL case, we were non-idle, we should consider
-		 * its weighted load.
-		 */
-		cpu_load_update(this_rq, load, pending_updates);
-	}
-}
-
-/*
- * Called from nohz_idle_balance() to update the load ratings before doing the
- * idle balance.
- */
-static void cpu_load_update_idle(struct rq *this_rq)
-{
-	/*
-	 * bail if there's load or we're actually up-to-date.
-	 */
-	if (weighted_cpuload(this_rq))
-		return;
-
-	cpu_load_update_nohz(this_rq, READ_ONCE(jiffies), 0);
-}
-
-/*
- * Record CPU load on nohz entry so we know the tickless load to account
- * on nohz exit. cpu_load[0] happens then to be updated more frequently
- * than other cpu_load[idx] but it should be fine as cpu_load readers
- * shouldn't rely into synchronized cpu_load[*] updates.
- */
-void cpu_load_update_nohz_start(void)
-{
-	struct rq *this_rq = this_rq();
-
-	/*
-	 * This is all lockless but should be fine. If weighted_cpuload changes
-	 * concurrently we'll exit nohz. And cpu_load write can race with
-	 * cpu_load_update_idle() but both updater would be writing the same.
-	 */
-	this_rq->cpu_load[0] = weighted_cpuload(this_rq);
-}
-
-/*
- * Account the tickless load in the end of a nohz frame.
- */
-void cpu_load_update_nohz_stop(void)
-{
-	unsigned long curr_jiffies = READ_ONCE(jiffies);
-	struct rq *this_rq = this_rq();
-	unsigned long load;
-	struct rq_flags rf;
-
-	if (curr_jiffies == this_rq->last_load_update_tick)
-		return;
-
-	load = weighted_cpuload(this_rq);
-	rq_lock(this_rq, &rf);
-	update_rq_clock(this_rq);
-	cpu_load_update_nohz(this_rq, curr_jiffies, load);
-	rq_unlock(this_rq, &rf);
-}
-#else /* !CONFIG_NO_HZ_COMMON */
-static inline void cpu_load_update_nohz(struct rq *this_rq,
-					unsigned long curr_jiffies,
-					unsigned long load) { }
-#endif /* CONFIG_NO_HZ_COMMON */
-
-static void cpu_load_update_periodic(struct rq *this_rq, unsigned long load)
-{
-#ifdef CONFIG_NO_HZ_COMMON
-	/* See the mess around cpu_load_update_nohz(). */
-	this_rq->last_load_update_tick = READ_ONCE(jiffies);
-#endif
-	cpu_load_update(this_rq, load, 1);
-}
-
-/*
- * Called from scheduler_tick()
- */
-void cpu_load_update_active(struct rq *this_rq)
-{
-	unsigned long load = weighted_cpuload(this_rq);
-
-	if (tick_nohz_tick_stopped())
-		cpu_load_update_nohz(this_rq, READ_ONCE(jiffies), load);
-	else
-		cpu_load_update_periodic(this_rq, load);
 }
 
 /*
@@ -7237,8 +6981,7 @@ static int select_idle_cpu(struct task_struct *p, struct sched_domain *sd, int t
 {
 	struct sched_domain *this_sd;
 	u64 avg_cost, avg_idle;
-	u64 time, cost;
-	s64 delta;
+	u64 time;
 	int cpu, nr = INT_MAX;
 
 	this_sd = rcu_dereference(*this_cpu_ptr(&sd_llc));
@@ -7277,9 +7020,7 @@ static int select_idle_cpu(struct task_struct *p, struct sched_domain *sd, int t
 	}
 
 	time = local_clock() - time;
-	cost = this_sd->avg_scan_cost;
-	delta = (s64)(time - cost) / 8;
-	this_sd->avg_scan_cost += delta;
+	update_avg(&this_sd->avg_scan_cost, time);
 
 	return cpu;
 }
@@ -8121,7 +7862,8 @@ static inline void alloc_eenv(void)
 
 	for_each_possible_cpu(cpu) {
 		struct energy_env *eenv = &per_cpu(eenv_cache, cpu);
-		eenv->cpu = kmalloc(sizeof(struct eenv_cpu) * cpu_count, GFP_KERNEL);
+		eenv->cpu = kmalloc_array(cpu_count, sizeof(struct eenv_cpu),
+					  GFP_KERNEL);
 		eenv->eenv_cpu_count = cpu_count;
 #ifdef DEBUG_EENV_DECISIONS
 		eenv->debug = (struct _eenv_debug *)kmalloc(eenv_debug_size(), GFP_KERNEL);
@@ -12128,7 +11870,6 @@ static void nohz_idle_balance(struct rq *this_rq, enum cpu_idle_type idle)
 
 			rq_lock_irq(rq, &rf);
 			update_rq_clock(rq);
-			cpu_load_update_idle(rq);
 			rq_unlock_irq(rq, &rf);
 
 			update_blocked_averages(balance_cpu);
@@ -12655,10 +12396,10 @@ int alloc_fair_sched_group(struct task_group *tg, struct task_group *parent)
 	struct cfs_rq *cfs_rq;
 	int i;
 
-	tg->cfs_rq = kzalloc(sizeof(cfs_rq) * nr_cpu_ids, GFP_KERNEL);
+	tg->cfs_rq = kcalloc(nr_cpu_ids, sizeof(cfs_rq), GFP_KERNEL);
 	if (!tg->cfs_rq)
 		goto err;
-	tg->se = kzalloc(sizeof(se) * nr_cpu_ids, GFP_KERNEL);
+	tg->se = kcalloc(nr_cpu_ids, sizeof(se), GFP_KERNEL);
 	if (!tg->se)
 		goto err;
 

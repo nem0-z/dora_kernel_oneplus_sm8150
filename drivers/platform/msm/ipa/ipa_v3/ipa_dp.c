@@ -1642,7 +1642,7 @@ int ipa3_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
 		 * 1 desc may be needed for the PACKET_INIT;
 		 * 1 desc for each frag
 		 */
-		desc = kzalloc(sizeof(*desc) * (num_frags + 3), GFP_ATOMIC);
+		desc = kcalloc(num_frags + 3, sizeof(*desc), GFP_ATOMIC);
 		if (!desc) {
 			IPAERR("failed to alloc desc array\n");
 			goto fail_gen;
@@ -2994,6 +2994,8 @@ begin:
 			/* TX comp */
 			ipa3_wq_write_done_status(src_pipe, tx_pkt);
 			IPADBG_LOW("tx comp imp for %d\n", src_pipe);
+			if (sys->drop_packet)
+				IPA_STATS_INC_CNT(ipa3_ctx->stats.rx_drop_pkts);
 		} else {
 			/* TX comp */
 			ipa3_wq_write_done_status(status.endp_src_idx, tx_pkt);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -157,8 +157,8 @@ static int create_lvl_avail_nodes(const char *name,
 		goto failed;
 	}
 
-	attr = devm_kzalloc(&lpm_pdev->dev,
-		sizeof(*attr) * (LPM_TYPE_NR + 1), GFP_KERNEL);
+	attr = devm_kcalloc(&lpm_pdev->dev,
+		LPM_TYPE_NR + 1, sizeof(*attr), GFP_KERNEL);
 	if (!attr) {
 		ret = -ENOMEM;
 		goto failed;
@@ -218,8 +218,10 @@ static int create_cpu_lvl_nodes(struct lpm_cluster *p, struct kobject *parent)
 	int ret = 0;
 	struct list_head *pos;
 
-	cpu_kobj = devm_kzalloc(&lpm_pdev->dev, sizeof(*cpu_kobj) *
-			cpumask_weight(&p->child_cpus), GFP_KERNEL);
+	cpu_kobj = devm_kcalloc(&lpm_pdev->dev,
+				cpumask_weight(&p->child_cpus),
+				sizeof(*cpu_kobj),
+				GFP_KERNEL);
 	if (!cpu_kobj)
 		return -ENOMEM;
 
@@ -236,8 +238,8 @@ static int create_cpu_lvl_nodes(struct lpm_cluster *p, struct kobject *parent)
 				goto release_kobj;
 			}
 
-			level_list = devm_kzalloc(&lpm_pdev->dev,
-					lpm_cpu->nlevels * sizeof(*level_list),
+			level_list = devm_kcalloc(&lpm_pdev->dev,
+					lpm_cpu->nlevels, sizeof(*level_list),
 					GFP_KERNEL);
 			if (!level_list) {
 				ret = -ENOMEM;
@@ -589,11 +591,8 @@ static int parse_cpu_levels(struct device_node *node, struct lpm_cluster *c)
 	if (ret)
 		goto failed;
 
-	cpu->ipi_prediction = !(of_property_read_bool(node,
-					"qcom,disable-ipi-prediction"));
-
-	cpu->lpm_prediction = !(of_property_read_bool(node,
-					"qcom,disable-prediction"));
+	key = "qcom,disable-prediction";
+	cpu->lpm_prediction = !(of_property_read_bool(node, key));
 
 	if (cpu->lpm_prediction) {
 		key = "qcom,ref-stddev";
