@@ -272,6 +272,20 @@ struct st_asm330lhhx_sensor {
 			u16 max_watermark;
 			u16 watermark;
 			u8 pm;
+			s64 last_fifo_timestamp;
+#ifdef CONFIG_ENABLE_ASMX_ACC_GYRO_BUFFERING
+	bool read_boot_sample;
+	int bufsample_cnt;
+	bool buffer_asm_samples;
+	struct kmem_cache *asm_cachepool;
+	struct asm_sample *asm_samplist[ASM_MAXSAMPLE];
+	ktime_t timestamp;
+	int max_buffer_time;
+	struct input_dev *buf_dev;
+	int report_evt_cnt;
+	struct mutex sensor_buff;
+	bool enable;
+#endif
 		};
 		struct {
 			uint8_t status_reg;
@@ -397,6 +411,13 @@ int __st_asm330lhhx_set_sensor_batching_odr(struct st_asm330lhhx_sensor *sensor,
 					   bool enable);
 int st_asm330lhhx_update_batching(struct iio_dev *iio_dev, bool enable);
 int st_asm330lhhx_of_get_pin(struct st_asm330lhhx_hw *hw, int *pin);
+int st_asm330lhhx_update_fifo(struct iio_dev *iio_dev, bool enable);
+int asm330lhhx_check_acc_gyro_early_buff_enable_flag(
+		struct st_asm330lhhx_sensor *sensor);
+int asm330lhhx_check_sensor_enable_flag(
+		struct st_asm330lhhx_sensor *sensor, bool enable);
+void st_asm330lhhx_set_cpu_idle_state(bool value);
+void st_asm330lhhx_hrtimer_reset(struct st_asm330lhhx_hw *hw, s64 irq_delta_ts);
 #ifdef CONFIG_IIO_ST_ASM330LHHX_MLC
 int st_asm330lhhx_mlc_probe(struct st_asm330lhhx_hw *hw);
 int st_asm330lhhx_mlc_remove(struct device *dev);
