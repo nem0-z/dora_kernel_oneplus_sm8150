@@ -131,7 +131,7 @@ static unsigned int sched_nr_latency = 8;
  * After fork, child runs first. If set to 0 (default) then
  * parent will (try to) run first.
  */
-unsigned int sysctl_sched_child_runs_first __read_mostly;
+unsigned int sysctl_sched_child_runs_first __read_mostly = 1;
 
 /*
  * To enable/disable energy aware feature.
@@ -150,7 +150,7 @@ unsigned int __read_mostly sysctl_sched_energy_aware = 1;
 unsigned int sysctl_sched_wakeup_granularity		= 1000000UL;
 unsigned int normalized_sysctl_sched_wakeup_granularity	= 1000000UL;
 
-const_debug unsigned int sysctl_sched_migration_cost	= 500000UL;
+const_debug unsigned int sysctl_sched_migration_cost	= 1000000UL;
 DEFINE_PER_CPU_READ_MOSTLY(int, sched_load_boost);
 
 #ifdef CONFIG_SCHED_WALT

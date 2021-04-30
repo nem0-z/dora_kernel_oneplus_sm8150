@@ -647,7 +647,7 @@ struct inode {
 		struct hlist_head	i_dentry;
 		struct rcu_head		i_rcu;
 	};
-	u64			i_version;
+	atomic64_t		i_version;
 	atomic64_t		i_sequence; /* see futex */
 	atomic_t		i_count;
 	atomic_t		i_dio_count;
@@ -1673,6 +1673,13 @@ extern struct dentry *vfs_tmpfile(struct vfsmount *mnt,
 				  struct dentry *dentry, umode_t mode,
 				  int open_flag);
 
+#ifdef CONFIG_COMPAT
+extern long compat_ptr_ioctl(struct file *file, unsigned int cmd,
+					unsigned long arg);
+#else
+#define compat_ptr_ioctl NULL
+#endif
+
 /*
  * VFS file helper functions.
  */
@@ -2119,21 +2126,6 @@ static inline void inode_dec_link_count(struct inode *inode)
 {
 	drop_nlink(inode);
 	mark_inode_dirty(inode);
-}
-
-/**
- * inode_inc_iversion - increments i_version
- * @inode: inode that need to be updated
- *
- * Every time the inode is modified, the i_version field will be incremented.
- * The filesystem has to be mounted with i_version flag
- */
-
-static inline void inode_inc_iversion(struct inode *inode)
-{
-       spin_lock(&inode->i_lock);
-       inode->i_version++;
-       spin_unlock(&inode->i_lock);
 }
 
 enum file_time_flags {
@@ -3251,6 +3243,14 @@ extern int generic_file_fsync(struct file *, loff_t, loff_t, int);
 
 extern int generic_check_addressable(unsigned, u64);
 
+#ifdef CONFIG_UNICODE
+extern bool needs_casefold(const struct inode *dir);
+#else
+static inline bool needs_casefold(const struct inode *dir)
+{
+	return 0;
+}
+#endif
 extern void generic_set_encrypted_ci_d_ops(struct dentry *dentry);
 
 #ifdef CONFIG_MIGRATION

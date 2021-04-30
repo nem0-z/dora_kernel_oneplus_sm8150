@@ -39,6 +39,7 @@
 #include <linux/slab.h>
 #include <linux/bitops.h>
 #include <linux/iomap.h>
+#include <linux/iversion.h>
 
 #include "ext4_jbd2.h"
 #include "xattr.h"
@@ -4570,6 +4571,7 @@ static int __ext4_get_inode_loc(struct inode *inode,
 	struct buffer_head	*bh;
 	struct super_block	*sb = inode->i_sb;
 	ext4_fsblk_t		block;
+	struct blk_plug		plug;
 	int			inodes_per_block, inode_offset;
 
 	iloc->bh = NULL;
@@ -4658,6 +4660,7 @@ make_io:
 		 * If we need to do any I/O, try to pre-readahead extra
 		 * blocks from the inode table.
 		 */
+		blk_start_plug(&plug);
 		if (EXT4_SB(sb)->s_inode_readahead_blks) {
 			ext4_fsblk_t b, end, table;
 			unsigned num;
@@ -4688,6 +4691,7 @@ make_io:
 		get_bh(bh);
 		bh->b_end_io = end_buffer_read_sync;
 		submit_bh(REQ_OP_READ, REQ_META | REQ_PRIO, bh);
+		blk_finish_plug(&plug);
 		wait_on_buffer(bh);
 		if (!buffer_uptodate(bh)) {
 			EXT4_ERROR_INODE_BLOCK(inode, block,
@@ -5003,12 +5007,14 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	EXT4_EINODE_GET_XTIME(i_crtime, ei, raw_inode);
 
 	if (likely(!test_opt2(inode->i_sb, HURD_COMPAT))) {
-		inode->i_version = le32_to_cpu(raw_inode->i_disk_version);
+		u64 ivers = le32_to_cpu(raw_inode->i_disk_version);
+
 		if (EXT4_INODE_SIZE(inode->i_sb) > EXT4_GOOD_OLD_INODE_SIZE) {
 			if (EXT4_FITS_IN_INODE(raw_inode, ei, i_version_hi))
-				inode->i_version |=
+				ivers |=
 		    (__u64)(le32_to_cpu(raw_inode->i_version_hi)) << 32;
 		}
+		inode_set_iversion_queried(inode, ivers);
 	}
 
 	ret = 0;
@@ -5292,11 +5298,13 @@ static int ext4_do_update_inode(handle_t *handle,
 	}
 
 	if (likely(!test_opt2(inode->i_sb, HURD_COMPAT))) {
-		raw_inode->i_disk_version = cpu_to_le32(inode->i_version);
+		u64 ivers = inode_peek_iversion(inode);
+
+		raw_inode->i_disk_version = cpu_to_le32(ivers);
 		if (ei->i_extra_isize) {
 			if (EXT4_FITS_IN_INODE(raw_inode, ei, i_version_hi))
 				raw_inode->i_version_hi =
-					cpu_to_le32(inode->i_version >> 32);
+					cpu_to_le32(ivers >> 32);
 			raw_inode->i_extra_isize =
 				cpu_to_le16(ei->i_extra_isize);
 		}

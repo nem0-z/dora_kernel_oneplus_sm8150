@@ -179,6 +179,7 @@ obj-$(CONFIG_RAS)		+= ras/
 obj-$(CONFIG_THUNDERBOLT)	+= thunderbolt/
 obj-$(CONFIG_CORESIGHT)		+= hwtracing/coresight/
 obj-y				+= hwtracing/intel_th/
+obj-y				+= hwtracing/google/
 obj-$(CONFIG_STM)		+= hwtracing/stm/
 obj-$(CONFIG_ANDROID)		+= android/
 obj-$(CONFIG_NVMEM)		+= nvmem/
@@ -193,7 +194,6 @@ obj-y += param_read_write/
 obj-y += step_motor/
 obj-$(CONFIG_TRI_STATE_KEY) += tri_state_key/
 obj-$(CONFIG_AW8697_HAPTIC) += vibrator/
-obj-y += infrared_proximity/infrared_power_control.o
 # GNSS driver
 obj-$(CONFIG_GNSS_SIRF)		+= gnsssirf/
 obj-$(CONFIG_GNSS)		+= gnss/

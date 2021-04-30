@@ -35,6 +35,7 @@
 #include <linux/buffer_head.h>
 #include <linux/bio.h>
 #include <linux/unicode.h>
+#include <linux/iversion.h>
 #include "ext4.h"
 #include "ext4_jbd2.h"
 
@@ -1372,7 +1373,7 @@ int ext4_fname_setup_ci_filename(struct inode *dir, const struct qstr *iname,
 	struct dx_hash_info *hinfo = &name->hinfo;
 	int len;
 
-	if (!IS_CASEFOLDED(dir)) {
+	if (!needs_casefold(dir)) {
 		cf_name->name = NULL;
 		return 0;
 	}
@@ -1423,7 +1424,7 @@ static bool ext4_match(struct inode *parent,
 #endif
 
 #ifdef CONFIG_UNICODE
-	if (IS_CASEFOLDED(parent)) {
+	if (needs_casefold(parent)) {
 		if (fname->cf_name.name) {
 			struct qstr cf = {.name = fname->cf_name.name,
 					  .len = fname->cf_name.len};
@@ -3251,7 +3252,7 @@ static int ext4_rmdir(struct inode *dir, struct dentry *dentry)
 			     "empty directory '%.*s' has too many links (%u)",
 			     dentry->d_name.len, dentry->d_name.name,
 			     inode->i_nlink);
-	inode->i_version++;
+	inode_inc_iversion(inode);
 	clear_nlink(inode);
 	/* There's no need to set i_disksize: the fact that i_nlink is
 	 * zero will ensure that the right thing happens during any
@@ -3655,7 +3656,7 @@ static int ext4_setent(handle_t *handle, struct ext4_renament *ent,
 	ent->de->inode = cpu_to_le32(ino);
 	if (ext4_has_feature_filetype(ent->dir->i_sb))
 		ent->de->file_type = file_type;
-	ent->dir->i_version++;
+	inode_inc_iversion(ent->dir);
 	ent->dir->i_ctime = ent->dir->i_mtime =
 		current_time(ent->dir);
 	ext4_mark_inode_dirty(handle, ent->dir);

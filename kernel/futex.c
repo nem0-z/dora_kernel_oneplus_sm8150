@@ -321,12 +321,8 @@ static int __init fail_futex_debugfs(void)
 	if (IS_ERR(dir))
 		return PTR_ERR(dir);
 
-	if (!debugfs_create_bool("ignore-private", mode, dir,
-				 &fail_futex.ignore_private)) {
-		debugfs_remove_recursive(dir);
-		return -ENOMEM;
-	}
-
+	debugfs_create_bool("ignore-private", mode, dir,
+			    &fail_futex.ignore_private);
 	return 0;
 }
 
@@ -1541,9 +1537,9 @@ static void __unqueue_futex(struct futex_q *q)
 {
 	struct futex_hash_bucket *hb;
 
-	if (WARN_ON_SMP(!q->lock_ptr || !spin_is_locked(q->lock_ptr))
-	    || WARN_ON(plist_node_empty(&q->list)))
+	if (WARN_ON_SMP(!q->lock_ptr) || WARN_ON(plist_node_empty(&q->list)))
 		return;
+	lockdep_assert_held(q->lock_ptr);
 
 	hb = container_of(q->lock_ptr, struct futex_hash_bucket, lock);
 	plist_del(&q->list, &hb->chain);
@@ -3583,6 +3579,10 @@ static int handle_futex_death(u32 __user *uaddr, struct task_struct *curr,
 	if ((((unsigned long)uaddr) % sizeof(*uaddr)) != 0)
 		return -1;
 
+	/* Futex address must be 32bit aligned */
+	if ((((unsigned long)uaddr) % sizeof(*uaddr)) != 0)
+		return -1;
+
 retry:
 	if (get_user(uval, uaddr))
 		return -1;
@@ -3903,10 +3903,12 @@ long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
 	switch (cmd) {
 	case FUTEX_WAIT:
 		val3 = FUTEX_BITSET_MATCH_ANY;
+		/* fall through */
 	case FUTEX_WAIT_BITSET:
 		return futex_wait(uaddr, flags, val, timeout, val3);
 	case FUTEX_WAKE:
 		val3 = FUTEX_BITSET_MATCH_ANY;
+		/* fall through */
 	case FUTEX_WAKE_BITSET:
 		return futex_wake(uaddr, flags, val, val3);
 	case FUTEX_REQUEUE:
