@@ -7147,24 +7147,6 @@ void sched_move_task(struct task_struct *tsk)
 	task_rq_unlock(rq, tsk, &rf);
 }
 
-#ifdef CONFIG_PROC_SYSCTL
-static int find_capacity_margin_levels(void)
-{
-	int cpu, max_clusters;
-
-	for (cpu = max_clusters = 0; cpu < num_possible_cpus();) {
-		cpu += cpumask_weight(topology_core_cpumask(cpu));
-		max_clusters++;
-	}
-
-	/*
-	 * Capacity margin levels is number of clusters available in
-	 * the system subtracted by 1.
-	 */
-	return max_clusters - 1;
-}
-#endif
-
 static inline struct task_group *css_tg(struct cgroup_subsys_state *css)
 {
 	return css ? container_of(css, struct task_group, css) : NULL;
