@@ -5,23 +5,35 @@ Type: Stable
 Device: OnePlus 7/T/Pro
 Compiler: Proton Clang 13.0.0
 Branch: master
-Build Number: 1.4
+Build Number: 1.5
 ```
 ## Changelog
 ```
--1.4:
--Kernel upstreamed to 4.14.233
--Merge latest CAF tag LAW.BR.5.1.r1-03800-89xx.0 treewide
--Merge latest F2FS stable tag 5.13-rc2
--Nuke sched_boost
--Increase input boost for little cluster
--Bump up scheduler migrations to reduce jitter
--Minor camera patches from CAF
--Revert GPU target frequency calculation algorithm from Sultan
--Sync with latest LOS FOD changes
--Scheduler backports and task placement optimizations
--Rcu_work implementation
--Bumped up schedutil down/up rate limit for better UX performance
--Tons of other patches treewide (ion, thermal, workqueue, cgroup)
--Built with latest Proton Clang 13
+-1.5:
+/*Major frequency table changes
+*Switch to efficient frequencies table
+*Introduce simple MSM thermal driver
+*Tweak thermals (thanks to @RealJohnGalt)
+*Nuke input boosting and frequency configuration treewide
+*/
+-Merge latest CAF tags treewide LAW.BR.5.1.r1-04100-89xx.0, LE.UM.4.4.2.r1-04100-SDX55
+-Merge latest CAF tags LA.UM.9.12.r1-11500-SMxx50.0 for qcacld-3.0,
+qca-wifi-host-cmn and fw-api
+-Upstream to 4.14.234
+-Hardcode up/down sched margins and clean up unused sched code
+-DM backport optimizations
+-Cleanup pm_qos usage in mdss
+-Add few more interfaces to dummy houston driver to satisfy surfaceflinger more (thanks to @RealJohnGalt) - OOS performance improved
+-ipv6 backport otpimizations
+-Reintroduce s2idle with appropriate patches*
+-pm:Improve idle drain*
+-Silence down bunch of logging
+-scsi/ufs backports and optimizations
+-mm:merge in more backports
+-Revert problematic ambient display commits
+-Enable -O3 optimizations for vDSO compilation
+-kgsl: Add low priority worker thread
+-Revisit and patch up a lot of scheduler code (this should yield a decent improvement)
+-char/adsprpc: Revert recent CAF changes that were causing lot of spam in
+logcat (this will improve performance for anyone who was hit with this issue since it was really rough spam)
 ```
