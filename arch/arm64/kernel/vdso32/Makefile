@@ -5,11 +5,7 @@
 # A mix between the arm64 and arm vDSO Makefiles.
 
 ifeq ($(cc-name),clang)
-  CC_ARM32 := $(CC) $(CLANG_TARGET_ARM32) -no-integrated-as
-  GCC_ARM32_TC := $(realpath $(dir $(shell which $(CROSS_COMPILE_ARM32)ld))/..)
-  ifneq ($(GCC_ARM32_TC),)
-	  CC_ARM32 += --gcc-toolchain=$(GCC_ARM32_TC)
-  endif
+  CC_ARM32 := $(CC) $(CLANG_TARGET_ARM32) 
 else
   CC_ARM32 := $(CROSS_COMPILE_ARM32)$(cc-name)
 endif
@@ -74,7 +70,11 @@ VDSO_CFLAGS += -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
                -Werror-implicit-function-declaration \
                -Wno-format-security \
                -std=gnu89
+ifeq ($(cc-name),clang)
+VDSO_CFLAGS  += -O3
+else
 VDSO_CFLAGS  += -O2
+endif
 # Some useful compiler-dependent flags from top-level Makefile
 VDSO_CFLAGS += $(call cc32-option,-Wdeclaration-after-statement,)
 VDSO_CFLAGS += $(call cc32-option,-Wno-pointer-sign)
