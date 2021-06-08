@@ -55,6 +55,8 @@
 /* FIXME: Jira ticket SDK-138 - philipd. */
 #define MAX_VTTYS 8
 
+#define BUF_SIZE 32 + sizeof(u32)
+
 struct vtty_port {
 	bool exists;
 	int vtty_id;
@@ -810,7 +812,7 @@ vconsole_write(struct console *co, const char *p, unsigned count)
 {
 	struct vtty_port *port = &ports[co->index];
 	size_t bytes_remaining = count;
-	char buf[port->max_msg_size + sizeof(u32)];
+	char buf[BUF_SIZE];
 	cycles_t last_sent_start = get_cycles();
 	static int pipe_full = 0;
 
