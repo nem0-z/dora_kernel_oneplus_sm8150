@@ -149,6 +149,7 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 	while (msdu) {
 		struct ol_txrx_vdev_t *tx_vdev;
 		void *rx_desc;
+		uint16_t off = 0;
 		/*
 		 * Remember the next list elem, because our processing
 		 * may cause the MSDU to get linked into a different list.
@@ -204,7 +205,8 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 			}
 
 			if (vdev->opmode == wlan_op_mode_ap &&
-			    qdf_nbuf_is_ipv4_eapol_pkt(msdu) &&
+			    __qdf_nbuf_data_is_ipv4_eapol_pkt(
+						   qdf_nbuf_data(msdu) + off) &&
 			    qdf_mem_cmp(qdf_nbuf_data(msdu) +
 					QDF_NBUF_DEST_MAC_OFFSET,
 					vdev->mac_addr.raw,
