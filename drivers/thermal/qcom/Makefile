@@ -14,3 +14,4 @@ obj-$(CONFIG_QTI_CX_IPEAK_COOLING_DEVICE) += cx_ipeak_cdev.o
 obj-$(CONFIG_QTI_RPM_SMD_COOLING_DEVICE) += rpm_smd_cooling_device.o
 obj-$(CONFIG_QTI_THERMAL_QFPROM) += qti_thermal_qfprom.o
 obj-$(CONFIG_MSM_THERMAL_SIMPLE) += msm_thermal_simple.o
+obj-$(CONFIG_QTI_BUS_SCALING_COOLING_DEVICE) += qti_bus_scaling_cdev.o
