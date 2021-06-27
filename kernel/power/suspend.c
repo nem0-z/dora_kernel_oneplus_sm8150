@@ -43,11 +43,9 @@
 #include "power.h"
 #include <soc/qcom/boot_stats.h>
 
-#include <linux/gpio.h>
 #include <linux/soc/qcom/smem_state.h>
 extern struct qcom_smem_state *qstate;
-#define PROC_AWAKE_ID 12 /* 12th bit */
-#define AWAKE_BIT BIT(PROC_AWAKE_ID)
+#define AWAKE_BIT BIT(12) /* 12th bit */
 
 const char * const pm_labels[] = {
 	[PM_SUSPEND_TO_IDLE] = "freeze",
@@ -76,7 +74,6 @@ static DECLARE_WAIT_QUEUE_HEAD(s2idle_wait_head);
 
 enum s2idle_states __read_mostly s2idle_state;
 static DEFINE_RAW_SPINLOCK(s2idle_lock);
-extern int check_touchirq_triggerd(void);
 
 #ifdef CONFIG_PM_SLEEP_MONITOR
 /* Suspend monitor thread toggle reason */
@@ -619,14 +616,10 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 #ifdef CONFIG_PM_SLEEP_MONITOR
 	stop_suspend_mon();
 #endif
+
 	arch_suspend_disable_irqs();
 	BUG_ON(!irqs_disabled());
 
-	if (check_touchirq_triggerd()) {
-		pr_err("[TP]touchpanel irq status is low\n");
-		error = -EBUSY;
-		goto Enable_irq;
-	}
 	error = syscore_suspend();
 	if (!error) {
 		*wakeup = pm_wakeup_pending();
@@ -642,7 +635,6 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 		}
 		syscore_resume();
 	}
-Enable_irq:
 
 	arch_suspend_enable_irqs();
 	BUG_ON(irqs_disabled());
