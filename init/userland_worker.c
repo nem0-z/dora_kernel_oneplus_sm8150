@@ -122,10 +122,6 @@ static void fix_sensors(void) {
 	linux_sh("/system/bin/chmod 666 /dev/input/event11");
 }
 
-static void dora(void) {
-	linux_write("ro.surface_flinger.supports_background_blur", "1", false);
-}
-
 static void userland_worker(struct work_struct *work)
 {
 	bool is_enforcing;
@@ -147,8 +143,6 @@ static void userland_worker(struct work_struct *work)
 	vbswap_help();
 
 	fix_sensors();
-
-	dora();
 
 	if (is_enforcing) {
 		pr_info("Going enforcing");
