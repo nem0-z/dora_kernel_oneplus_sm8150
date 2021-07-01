@@ -1,11 +1,11 @@
 {
   "kernel": {
     "name": "Dora Kernel",
-    "version": "v1.6",
-    "link": "https://github.com/nem0-z/dora_kernel_oneplus_sm8150/releases/download/1.6/Dora-Kernel-v1.6-sdcard_fs.zip",
+    "version": "v1.7",
+    "link": "https://github.com/nem0-z/dora_kernel_oneplus_sm8150/releases/download/1.7/Dora-Kernel-v1.7-sdcard_fs.zip",
     "changelog_url": "https://raw.githubusercontent.com/nem0-z/dora_kernel_oneplus_sm8150/master/ota/changelog",
-    "date": "2021-06-05",
-    "sha1": "877a454431a0d6cda48ac2f53e15154f60d59808"
+    "date": "2021-07-01",
+    "sha1": "3c28a294775afcfaf53e237b11be8ec3b611ae84"
   },
   "support": {
     "link": "https://t.me/nem0kernel"

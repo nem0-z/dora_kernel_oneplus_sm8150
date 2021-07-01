@@ -5,20 +5,27 @@ Type: Stable
 Device: OnePlus 7/T/Pro
 Compiler: Proton Clang 13.0.0
 Branch: master
-Build Number: 1.6
+Build Number: 1.7
 ```
 ## Changelog
 ```
--1.6:
+-1.7:
+-Merge 4.14.238 upstream
+-Merge latest f2fs-stable upstream
+-Merge latest CAF tag treewide LE.UM.4.4.2.r1-04400-SDX55
+-Merge latest CAF tag "LA.UM.9.1.r1-10500-SMxxx0.QSSI12.0" for qcacld, fw-api and qca-wifi-host-cmn
+-Update Wireguard to 20210606
+-Undervolt GPU
+-Backport TCP patches
+-Backport BBR2 TCP congestion algorithm (enabled by default)
+-fs: Get rid of bunch of CAF tracings
+-Ion patches from CAF
+-Improve zstd performance
+-Disable FC boost on AOD
+-Revert async callbacks for suspend and add a wakeup delay to improve dt2w 
+-Disable bunch of WiFi wakelocks
+-Disable irq logging on resume
+-Lower SLMK minfree and timeout values
+-Reintroduce char/adsprpc changes from CAF that caused huge logspams before
 -Merge latest CAF tags LE.UM.5.4.2.r1-00100-QCS610.0, LA.UM.9.1.r1-10200-SMxxx0.0
--Merge 4.14.235 upstream
--Move and affine surfaceflinger to prime (this improves performance and gives us lower jitter)
--Updated up/down scheduler rate limits for better freq utilisation
--Set each cpu clock to max when waking up
--Mark many kthreads as perf critical (rcu,mm,block)
--Merge more rcu backports
--Cgroup bringup
--Genirq bringup
--Lower max s2idle attempts (reduce number of freezes)
--Add unified cmdline paramter for PD switching (recent LOS patch caused issues for some OOS users so that part of code will now be ignored if you flash kernel on OOS)
 ```
