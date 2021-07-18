@@ -804,13 +804,15 @@ static int ipa3_rx_switch_to_intr_mode(struct ipa3_sys_context *sys)
 	atomic_set(&sys->curr_polling_state, 0);
 	__ipa3_update_curr_poll_state(sys->ep->client, 0);
 
-	ipa3_dec_release_wakelock();
+	if (IPA_WAKELOCK)
+		ipa3_dec_release_wakelock();
 	ret = gsi_config_channel_mode(sys->ep->gsi_chan_hdl,
 		GSI_CHAN_MODE_CALLBACK);
 	if ((ret != GSI_STATUS_SUCCESS) &&
 		!atomic_read(&sys->curr_polling_state)) {
 		if (ret == -GSI_STATUS_PENDING_IRQ) {
-			ipa3_inc_acquire_wakelock();
+			if (IPA_WAKELOCK)
+				ipa3_inc_acquire_wakelock();
 			atomic_set(&sys->curr_polling_state, 1);
 			__ipa3_update_curr_poll_state(sys->ep->client, 1);
 		} else {
@@ -4453,7 +4455,8 @@ void __ipa_gsi_irq_rx_scedule_poll(struct ipa3_sys_context *sys)
 	atomic_set(&sys->curr_polling_state, 1);
 	__ipa3_update_curr_poll_state(sys->ep->client, 1);
 
-	ipa3_inc_acquire_wakelock();
+	if (IPA_WAKELOCK)
+		ipa3_inc_acquire_wakelock();
 
 	/*
 	 * pm deactivate is done in wq context
@@ -4542,7 +4545,8 @@ static void ipa_dma_gsi_irq_rx_notify_cb(struct gsi_chan_xfer_notify *notify)
 			/* put the gsi channel into polling mode */
 			gsi_config_channel_mode(sys->ep->gsi_chan_hdl,
 				GSI_CHAN_MODE_POLL);
-			ipa3_inc_acquire_wakelock();
+			if (IPA_WAKELOCK)
+				ipa3_inc_acquire_wakelock();
 			atomic_set(&sys->curr_polling_state, 1);
 			queue_work(sys->wq, &sys->work);
 		}
