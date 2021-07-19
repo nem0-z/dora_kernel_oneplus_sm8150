@@ -108,6 +108,16 @@ static inline int linux_sh(const char* command)
 	return ret;
 }
 
+static inline int linux_test(const char* path)
+{
+	strcpy(argv[0], "/system/bin/test");
+	strcpy(argv[1], "-f");
+	strcpy(argv[2], path);
+	argv[3] = NULL;
+
+	return use_userspace(argv);
+}
+
 static void vbswap_help(void)
 {
 	linux_sh("/system/bin/echo 4294967296 > /sys/devices/virtual/block/vbswap0/disksize");
