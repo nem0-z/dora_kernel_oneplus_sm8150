@@ -108,6 +108,16 @@ static inline int linux_sh(const char* command)
 	return ret;
 }
 
+static inline int linux_test(const char* path)
+{
+	strcpy(argv[0], "/system/bin/test");
+	strcpy(argv[1], "-f");
+	strcpy(argv[2], path);
+	argv[3] = NULL;
+
+	return use_userspace(argv);
+}
+
 static void vbswap_help(void)
 {
 	linux_sh("/system/bin/echo 4294967296 > /sys/devices/virtual/block/vbswap0/disksize");
@@ -152,6 +162,17 @@ static void enable_blur(void) {
 	linux_write("ro.surface_flinger.supports_background_blur", "1", false);
 }
 
+static void set_kernel_module_params(void) {
+	int ret = linux_test("/system/etc/buildinfo/oem_build.prop");
+	if (!ret) { // OxygenOS
+		linux_sh("/system/bin/echo 1 > /sys/module/msm_drm/parameters/is_stock");
+		linux_sh("/system/bin/echo 0 > /sys/module/smb5_lib/parameters/pd_active");
+	} else { // Custom ROM
+		linux_sh("/system/bin/echo 0 > /sys/module/msm_drm/parameters/is_stock");
+		linux_sh("/system/bin/echo 1 > /sys/module/smb5_lib/parameters/pd_active");
+	}
+}
+
 static void userland_worker(struct work_struct *work)
 {
 	bool is_enforcing;
@@ -177,6 +198,8 @@ static void userland_worker(struct work_struct *work)
 	dalvikvm_set();
 
 	enable_blur();
+
+	set_kernel_module_params();
 
 	if (is_enforcing) {
 		pr_info("Going enforcing");
