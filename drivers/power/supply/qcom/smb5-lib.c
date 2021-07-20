@@ -67,7 +67,7 @@
 #define DASH_VALID_TEMP_HIG_THRESHOLD	430
 
 static unsigned int pd_active = 1;
-module_param(pd_active, uint, 0444);
+module_param(pd_active, uint, 0644);
 
 struct smb_charger *g_chg;
 struct regmap *pm_regmap;

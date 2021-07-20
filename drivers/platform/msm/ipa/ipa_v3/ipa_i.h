@@ -488,6 +488,8 @@ enum {
 
 #define IPA_RULE_CNT_MAX 512
 
+#define IPA_WAKELOCK 0
+
 struct ipa3_active_client_htable_entry {
 	struct hlist_node list;
 	char id_string[IPA3_ACTIVE_CLIENTS_LOG_NAME_LEN];
@@ -2103,6 +2105,7 @@ struct ipa3_context {
 	bool ipa_in_cpe_cfg;
 	bool is_modem_up;
 	bool use_tput_est_ep;
+	bool is_device_crashed;
 };
 
 struct ipa3_plat_drv_res {

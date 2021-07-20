@@ -452,7 +452,7 @@ void update_sarray(int CC)
 	Z2 = xorshft64();
 	Z3 = xorshft64();
 	if ((Z1 & 1) == 0) {
-		pr_info("0\n");
+		pr_debug("0\n");
 		for (C = 0; C < (arr_RND_SIZE - 4) ; C = C + 4) {
 			X = xorshft128();
 			Y = xorshft128();
@@ -462,7 +462,7 @@ void update_sarray(int CC)
 			sarr_RND[CC][C + 3] = X ^ Y ^ Z3;
 		}
 	} else {
-		pr_info("1\n");
+		pr_debug("1\n");
 		for (C = 0; C < (arr_RND_SIZE - 4) ; C = C + 4) {
 			X = xorshft128();
 			Y = xorshft128();
