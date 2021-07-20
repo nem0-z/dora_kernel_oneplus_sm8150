@@ -5,21 +5,19 @@ Type: Stable
 Device: OnePlus 7/T/Pro
 Compiler: Proton Clang 13.0.0
 Branch: master
-Build Number: 1.8
+Build Number: 2.0
 ```
 ## Changelog
 ```
--1.8:
--Merge 4.14.239 linux stable upstream
--Merge latest CAF tag "LA.UM.9.1.r1-10600-SMxxx0.0" treewide
--Merge latest CAF tag "LA.UM.9.1.r1-10600-SMxxx0.0" for qcacld-3.0, qca-wifi-host-cmn and fw-api
--Switch to srandom in favor of urandom
--Fix camera issues (switching lenses crashes)
--Set correct dalvik vm values for 6, 8 and 12GB models respectively
--Increase boost on app launch
--Various scheduler improvements
--Switch to power efficient wq treewide
--Vmpressure patches from Sultan
--Introduce dynamic cpuset for display group
--Add configurable VMSTAT interval and set it to 20ms
+-2.0:
+-Revert previously introduced arm64 backports as they caused crashdumps for
+few people
+-Optimize interrupt CPU usage for touchscreen|
+-Some sched fixups for !CONFIG_SCHED_WALT
+-Mm updates from Sultan
+-Enable blur support
+-Patch module params on init instead of through ak3 (FP issues on OOS are now
+fixed)
+-Drop VMSTAT interval to 15s
+-Update cpusets for display and foreground (open up to all cores except prime)
 ```
