@@ -47,6 +47,7 @@
 #include <linux/msm-bus.h>
 #include "op_charge.h"
 #include <linux/oneplus/boot_mode.h>
+#include <linux/userland.h>
 
 #ifdef CONFIG_FORCE_FAST_CHARGE
 #include <linux/fastchg.h>
@@ -65,9 +66,6 @@
 #define BATT_TEMP_HYST                20
 #define DASH_VALID_TEMP_LOW_THRESHOLD	125
 #define DASH_VALID_TEMP_HIG_THRESHOLD	430
-
-static unsigned int pd_active = 1;
-module_param(pd_active, uint, 0644);
 
 struct smb_charger *g_chg;
 struct regmap *pm_regmap;
@@ -8007,7 +8005,7 @@ static void set_usb_switch(struct smb_charger *chg, bool enable)
 		return;
 	}
 
-	if (pd_active && chg->pd_active) {
+	if (!is_stock && chg->pd_active) {
 		pr_info("%s:pd_active return\n", __func__);
 		return;
 	}

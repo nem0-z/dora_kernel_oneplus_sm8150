@@ -44,7 +44,7 @@
 #include "sde_trace.h"
 #include <linux/msm_drm_notify.h>
 #include <linux/notifier.h>
-#include <linux/moduleparam.h>
+#include <linux/userland.h>
 
 #include <linux/err.h>
 #include <linux/list.h>
@@ -126,9 +126,6 @@ static struct sde_crtc_custom_events custom_events[] = {
 /* default line padding ratio limitation */
 #define MAX_VPADDING_RATIO_M		63
 #define MAX_VPADDING_RATIO_N		15
-
-static unsigned int is_stock = 0;
-module_param(is_stock, uint, 0644);
 
 static inline struct sde_kms *_sde_crtc_get_kms(struct drm_crtc *crtc)
 {
@@ -5966,7 +5963,7 @@ static int sde_crtc_onscreenfinger_atomic_check(struct sde_crtc_state *cstate,
 					aod_index = -1;
 					SDE_ATRACE_END("aod_layer_hid");
 			}
-		
+			
 			if (fp_index >= 0)
 				cstate->fingerprint_mode = true;
 			else
