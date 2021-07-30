@@ -21,7 +21,7 @@
 #include <linux/debugfs.h>
 #include <linux/ktime.h>
 #include <uapi/drm/sde_drm.h>
-#include <drm/drm_mode.h>
+#include <drm/drm_mode.h>02802d2189f2ef696bd871e9768e110375a257a7
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_flip_work.h>
