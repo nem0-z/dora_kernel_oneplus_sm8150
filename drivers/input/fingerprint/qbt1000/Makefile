@@ -1,1 +1,0 @@
-obj-$(CONFIG_MSM_QBT1000) += qbt1000.o
