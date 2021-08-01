@@ -194,13 +194,17 @@ unsigned int capacity_margin				= 1280;
 
 /* Migration margins */
 unsigned int sysctl_sched_capacity_margin_up[MAX_MARGIN_LEVELS] = {
-			[0 ... MAX_MARGIN_LEVELS-1] = 1280}; /* ~20% margin */
+			1280, 1625
+}; /* ~20% margin for small, ~37% margin for big */
 unsigned int sysctl_sched_capacity_margin_down[MAX_MARGIN_LEVELS] = {
-			[0 ... MAX_MARGIN_LEVELS-1] = 1575}; /* ~35% margin */
+			1796, 1442
+}; /* ~43% margin for big, ~29% margin for big+ */
 unsigned int sched_capacity_margin_up[NR_CPUS] = {
-			[0 ... NR_CPUS-1] = 1280}; /* ~20% margin */
+			1280, 1280, 1280, 1280, 1625, 1625, 1625, 1024
+}; /* ~20% margin for small, ~37% for big, not used for big+  */
 unsigned int sched_capacity_margin_down[NR_CPUS] = {
-			[0 ... NR_CPUS-1] = 1575}; /* ~35% margin */
+			1024, 1024, 1024, 1024, 1796, 1796, 1796, 1442
+}; /* Not used for small, ~43% margin for big, ~29% for big+ */
 
 /* 1ms default for 20ms window size scaled to 1024 */
 unsigned int sysctl_sched_min_task_util_for_boost = 51;
