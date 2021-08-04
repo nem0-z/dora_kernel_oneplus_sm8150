@@ -551,7 +551,7 @@ enum {
 					 */
 };
 
-#define DEFAULT_RETRY_IO_COUNT	8	/* maximum retry read IO count */
+#define DEFAULT_RETRY_IO_COUNT	8	/* maximum retry read IO or flush count */
 
 #if defined(CONFIG_HZ_100)
 /* congestion wait timeout value, default: 10ms */
