@@ -3,21 +3,29 @@
 Kernel: Dora Kernel
 Type: Stable
 Device: OnePlus 7/T/Pro
-Compiler: Proton Clang 13.0.0
+Compiler: Dora Clang 14.0.0
 Branch: master
-Build Number: 2.0
+Build Number: 2.1
 ```
 ## Changelog
 ```
--2.0:
--Revert previously introduced arm64 backports as they caused crashdumps for
-few people
--Optimize interrupt CPU usage for touchscreen|
--Some sched fixups for !CONFIG_SCHED_WALT
--Mm updates from Sultan
--Enable blur support
--Patch module params on init instead of through ak3 (FP issues on OOS are now
-fixed)
--Drop VMSTAT interval to 15s
--Update cpusets for display and foreground (open up to all cores except prime)
+-2.1:
+-Merge latest 4.14.244 upstream
+-Merge latest CAF tags LA.UM.9.1.r1-10700-SMxxx0.QSSI12.0 and LA.UM.9.1.r1-10900-SMxxx0.0 treewide
+-Merge latest CAF tag LA.UM.9.1.r1-10700-SMxxx0.QSSI12.0 for qcacld-3.0, qca-wifi-host-cmn and fw-api
+-Bump min freq for prime core to 2.2GHz and update big cluster capacity (performance improvement)
+-Scheduler tuning 
+-drm/msm patches from Google
+-Switch to Westwood TCP congestion algo
+-Ion, mm and SLMK updates from Sultan
+-Various rcu patches
+-Revisit of LTO tweaks by John
+-Further optimize PM QoS usage for touchscreen driver
+-Move to even more power efficient workingqueues
+-Cpuset improvements
+-Disable Qualcomm Thermal Limiter
+-Disabled bunch of logging treewide
+-Clean up setting of module params for unified FOD and PD charging
+-Clean up unused code treewide
+-Compile with personal built LLVM and Clang 14 toolchain
 ```
