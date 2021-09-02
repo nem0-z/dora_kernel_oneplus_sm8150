@@ -1837,8 +1837,8 @@ static int do_execveat_common(int fd, struct filename *filename,
 		else if (unlikely(!strncmp(filename->name,
 					   HWCOMPOSER_BIN_PREFIX,
 					   strlen(HWCOMPOSER_BIN_PREFIX)))) {
-			current->pc_flags |= PC_PERF_AFFINE;
-			set_cpus_allowed_ptr(current, cpu_perf_mask);
+			current->pc_flags |= PC_PRIME_AFFINE;
+			set_cpus_allowed_ptr(current, cpu_prime_mask);
 		} else if (unlikely(!strncmp(filename->name,
 						SURFACEFLINGER_BIN_PREFIX,
 						strlen(SURFACEFLINGER_BIN_PREFIX)))) {
