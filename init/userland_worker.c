@@ -115,7 +115,6 @@ static void userland_worker(struct work_struct *work)
 
 	vbswap_help();
 	msleep(DELAY);
-
 	if (is_enforcing) {
 		pr_info("Going enforcing");
 		set_selinux(1);

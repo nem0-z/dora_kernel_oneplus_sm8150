@@ -11,7 +11,7 @@
 #if defined(CONFIG_MSM_RDM_NOTIFY)
 #include <linux/msm_drm_notify.h>
 #endif
-
+#include <linux/gpio.h>
 #include <linux/types.h>
 #include <linux/notifier.h>
 /**********************************************************/
@@ -21,12 +21,6 @@ enum FP_MODE{
 	GF_SLEEP_MODE,
 	GF_FF_MODE,
 	GF_DEBUG_MODE = 0x56
-};
-
-struct fp_underscreen_info {
-    uint8_t touch_state;
-    uint16_t x;
-    uint16_t y;
 };
 
 #define SUPPORT_NAV_EVENT
@@ -49,7 +43,6 @@ struct fp_underscreen_info {
 #define GF_KEY_INPUT_POWER		KEY_POWER
 #define GF_KEY_INPUT_CAMERA		KEY_CAMERA
 #define GF_KEY_INPUT_LONG_PRESS		BTN_B
-
 
 #if defined(SUPPORT_NAV_EVENT)
 typedef enum gf_nav_event {
@@ -176,19 +169,44 @@ struct gf_dev {
 };
 int gf_pinctrl_init(struct gf_dev* gf_dev);
 int gf_parse_dts(struct gf_dev* gf_dev);
-void gf_cleanup(struct gf_dev *gf_dev);
+static inline void gf_cleanup(struct gf_dev *gf_dev)
+{
+	pr_info("[info] %s\n",__func__);
+	if (gpio_is_valid(gf_dev->irq_gpio))
+	{
+		gpio_free(gf_dev->irq_gpio);
+		pr_info("remove irq_gpio success\n");
+	}
+	if (gpio_is_valid(gf_dev->reset_gpio))
+	{
+		gpio_free(gf_dev->reset_gpio);
+		pr_info("remove reset_gpio success\n");
+	}
+}
 
-int gf_power_on(struct gf_dev *gf_dev);
-int gf_power_off(struct gf_dev *gf_dev);
+static inline int gf_power_on(struct gf_dev *gf_dev)
+{
+	int rc = 0;
+
+	pr_info("---- power on ok ----\n");
+
+	return rc;
+}
+static inline int gf_power_off(struct gf_dev *gf_dev)
+{
+	int rc = 0;
+
+    pr_info("---- power off ----\n");
+
+	return rc;
+}
 
 int gf_hw_reset(struct gf_dev *gf_dev, unsigned int delay_ms);
 int gf_irq_num(struct gf_dev *gf_dev);
 
 void sendnlmsg(char *msg);
-void sendnlmsg_tp(struct fp_underscreen_info *msg, int length);
 int netlink_init(void);
 void netlink_exit(void);
 extern int gf_opticalfp_irq_handler(int event);
-extern int opticalfp_irq_handler(struct fp_underscreen_info* tp_info);
 
 #endif /*__GF_SPI_H*/
