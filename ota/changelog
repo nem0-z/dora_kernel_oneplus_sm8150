@@ -5,27 +5,26 @@ Type: Stable
 Device: OnePlus 7/T/Pro
 Compiler: Dora Clang 14.0.0
 Branch: master
-Build Number: 2.1
+Build Number: 2.2
 ```
 ## Changelog
 ```
--2.1:
--Merge latest 4.14.244 upstream
--Merge latest CAF tags LA.UM.9.1.r1-10700-SMxxx0.QSSI12.0 and LA.UM.9.1.r1-10900-SMxxx0.0 treewide
--Merge latest CAF tag LA.UM.9.1.r1-10700-SMxxx0.QSSI12.0 for qcacld-3.0, qca-wifi-host-cmn and fw-api
--Bump min freq for prime core to 2.2GHz and update big cluster capacity (performance improvement)
--Scheduler tuning 
--drm/msm patches from Google
--Switch to Westwood TCP congestion algo
--Ion, mm and SLMK updates from Sultan
--Various rcu patches
--Revisit of LTO tweaks by John
--Further optimize PM QoS usage for touchscreen driver
--Move to even more power efficient workingqueues
--Cpuset improvements
--Disable Qualcomm Thermal Limiter
--Disabled bunch of logging treewide
--Clean up setting of module params for unified FOD and PD charging
--Clean up unused code treewide
--Compile with personal built LLVM and Clang 14 toolchain
+2.2:
+-Merge latest 4.14.246 kernel stable upstream
+-Merge latest CAF tag LA.UM.9.1.r1-11100-SMxxx0.0 treewide
+-Merge latest CAF tag LA.UM.9.1.r1-11100-SMxxx0.0 for qcacld-3.0, qca-wifi-host-cmn, fw-api and data (update WLAN drivers to 5.2.022.8Q)
+-Merge ASB-2021-09-05_4.14-stable security tag for September
+-Clean up FOD code and affine it's PM QoS requests to prime core
+-Scheduler and cpuidle improvements
+-Revert previous RCU patchset (caused crashdumps on OOS)
+-Complete revisit of kbuild and Makefile to improve kernel performance with LTO 
+-Enabled DCE and OPTIMIZE_INLINING
+-Built with latest Clang 14 (latest LLVM tc built with LTO, lld and Polly)
+-Update cpuset for fg tasks
+-Split perf critical flags into 3 standalone ones for each cluster (previously surfaceflinger and/or hwcomposer sometimes wouldn't be affined to prime because of this)
+-Affine hwcomposer to prime cluster
+-Hardcode drm/sde for sm8150
+-Workqueue optimizations
+-Set qs blur only for OOS
+-TCP sched improvements for Westwood and BBR2
 ```
