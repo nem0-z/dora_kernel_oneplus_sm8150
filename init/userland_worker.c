@@ -189,7 +189,8 @@ static void userland_worker(struct work_struct *work)
 	msleep(DELAY);
 	dalvikvm_set();
 	set_kernel_module_params();
-	enable_blur();
+	if (is_stock)
+		enable_blur();
 	fix_sensors();
 
 	if (is_enforcing) {

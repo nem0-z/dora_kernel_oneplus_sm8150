@@ -1129,8 +1129,13 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 	cpumask_t allowed_mask;
 
 	/* Don't allow perf-critical threads to have non-perf affinities */
-	if ((p->flags & PF_PERF_CRITICAL) && new_mask != cpu_lp_mask &&
-	    new_mask != cpu_perf_mask && new_mask != cpu_prime_mask)
+	if ((p->pc_flags & PC_PRIME_AFFINE) && new_mask != cpu_prime_mask)
+		return -EINVAL;
+
+	if ((p->pc_flags & PC_PERF_AFFINE) && new_mask != cpu_perf_mask)
+		return -EINVAL;
+
+	if ((p->pc_flags & PC_LITTLE_AFFINE) && new_mask != cpu_lp_mask)
 		return -EINVAL;
 
 	rq = task_rq_lock(p, &rf);
@@ -3625,14 +3630,7 @@ static noinline void __schedule_bug(struct task_struct *prev)
 		print_ip_sym(preempt_disable_ip);
 		pr_cont("\n");
 	}
-	if (panic_on_warn)
-		panic("scheduling while atomic\n");
-
-#ifdef CONFIG_PANIC_ON_SCHED_BUG
-	BUG();
-#endif
-	dump_stack();
-	add_taint(TAINT_WARN, LOCKDEP_STILL_OK);
+	panic("scheduling while atomic\n");
 }
 
 /*

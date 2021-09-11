@@ -365,17 +365,21 @@ static int irq_setup(struct gf_dev *gf_dev)
 static void gf_kernel_key_input(struct gf_dev *gf_dev, struct gf_key *gf_key)
 {
 	uint32_t key_input = 0;
-	if (GF_KEY_HOME == gf_key->key) {
-		key_input = GF_KEY_INPUT_HOME;
-	} else if (GF_KEY_POWER == gf_key->key) {
-		key_input = GF_KEY_INPUT_POWER;
-	} else if (GF_KEY_CAMERA == gf_key->key) {
-		key_input = GF_KEY_INPUT_CAMERA;
-	} else if (GF_KEY_LONGPRESS == gf_key->key) {
-		key_input = GF_KEY_INPUT_LONG_PRESS;
-	} else {
-		/* add special key define */
-		key_input = gf_key->key;
+	switch(gf_key->key) {
+		case GF_KEY_HOME :
+			key_input = GF_KEY_INPUT_HOME;
+			break;
+		case GF_KEY_POWER :
+			key_input = GF_KEY_INPUT_POWER;
+			break;
+		case GF_KEY_CAMERA :
+			key_input = GF_KEY_INPUT_CAMERA;
+			break;
+		case GF_KEY_LONGPRESS :
+			key_input = GF_KEY_INPUT_LONG_PRESS;
+			break;
+		default:
+			key_input = gf_key->key;
 	}
 	pr_info("%s: received key event[%d], key=%d, value=%d\n",
 			__func__, key_input, gf_key->key, gf_key->value);
@@ -661,30 +665,6 @@ static struct attribute *gf_attributes[] = {
 static const struct attribute_group gf_attribute_group = {
 	.attrs = gf_attributes,
 };
-
-//#ifdef VENDOR_EDIT
-static struct fp_underscreen_info fp_tpinfo ={0};
-int opticalfp_irq_handler(struct fp_underscreen_info* tp_info)
-{
-	pr_info("[info]:%s", __func__);
-
-	if (gf.spi == NULL) {
-		return 0;
-	}
-	fp_tpinfo = *tp_info;
-	pr_err("fp_tpinfo.x = %d, fp_tpinfo.y = %d, fp_tpinfo.touch_state = %d\n", fp_tpinfo.x, fp_tpinfo.y,fp_tpinfo.touch_state);
-	if (fp_tpinfo.touch_state == 1) {
-		fp_tpinfo.touch_state = GF_NET_EVENT_TP_TOUCHDOWN;
-		sendnlmsg_tp(&fp_tpinfo,sizeof(fp_tpinfo));
-	} else if (fp_tpinfo.touch_state == 0) {
-		fp_tpinfo.touch_state = GF_NET_EVENT_TP_TOUCHUP;
-		sendnlmsg_tp(&fp_tpinfo,sizeof(fp_tpinfo));
-	}
-	return 0;
-}
-
-EXPORT_SYMBOL(opticalfp_irq_handler);
-//#endif
 
 int gf_opticalfp_irq_handler(int event)
 {

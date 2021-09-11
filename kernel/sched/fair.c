@@ -7637,8 +7637,6 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 			target_cpu = -1;
 
 			fbt_env->fastpath = PREV_CPU_FASTPATH;
-			trace_sched_find_best_target(p, prefer_idle, min_util,
-					cpu, -1, -1, -1, target_cpu, -1);
 			goto out;
 		}
 	}
@@ -7902,11 +7900,13 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 				continue;
 			}
 
+#ifdef CONFIG_SCHED_WALT
 			/*
 			 * Consider only idle CPUs for active migration.
 			 */
 			if (p->state == TASK_RUNNING)
 				continue;
+#endif
 
 			/*
 			 * Case C) Non latency sensitive tasks on ACTIVE CPUs.
@@ -7948,9 +7948,14 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 		 * visiting other clusters. If the boost is ON_BIG we visit
 		 * next cluster if they are higher in capacity. If we are
 		 * not in any kind of boost, we break.
+		 *
+		 * And always visit higher capacity group, if solo cpu group
+		 * is not in idle.
 		 */
 		if (!prefer_idle && !boosted &&
-			(target_cpu != -1 || best_idle_cpu != -1) &&
+		    ((target_cpu != -1 && (sg->group_weight > 1 ||
+		     !next_group_higher_cap)) ||
+		     best_idle_cpu != -1) &&
 			(fbt_env->placement_boost == SCHED_BOOST_NONE ||
 			sched_boost() != FULL_THROTTLE_BOOST ||
 			(fbt_env->placement_boost == SCHED_BOOST_ON_BIG &&
@@ -8035,12 +8040,14 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 		? best_active_cpu
 		: best_idle_cpu;
 
+#ifdef CONFIG_SCHED_WALT
 	if (target_cpu == -1 && most_spare_cap_cpu != -1 &&
 	    /* ensure we use active cpu for active migration */
 	    !(p->state == TASK_RUNNING && !idle_cpu(most_spare_cap_cpu)) &&
 		/* do not pick an overutilized most_spare_cap_cpu */
 		!cpu_overutilized(most_spare_cap_cpu))
 		target_cpu = most_spare_cap_cpu;
+#endif
 
 	trace_sched_find_best_target(p, prefer_idle, min_util, cpu,
 				     best_idle_cpu, best_active_cpu,
