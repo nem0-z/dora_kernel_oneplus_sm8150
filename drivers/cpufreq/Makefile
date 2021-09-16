@@ -22,9 +22,6 @@ obj-$(CONFIG_CPU_BOOST)			+= cpu-boost.o
 # CPU Input Boost
 obj-$(CONFIG_CPU_INPUT_BOOST)		+= cpu_input_boost.o
 
-# CPU minimum frenquency when screen is on
-obj-$(CONFIG_CPU_MIN_FREQ)           += cpu_min_freq.o
-
 obj-$(CONFIG_CPUFREQ_DT)		+= cpufreq-dt.o
 obj-$(CONFIG_CPUFREQ_DT_PLATDEV)	+= cpufreq-dt-platdev.o
 
