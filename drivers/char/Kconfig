@@ -53,7 +53,7 @@ source "drivers/tty/serdev/Kconfig"
 
 config SRANDOM
 	tristate "Seed PRNG to replace urandom"
-	default n
+	default y
 	---help---
 	  If you say Y here, The kernel support for
 	  Seed PRNG will be enabled.
