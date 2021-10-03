@@ -5,26 +5,19 @@ Type: Stable
 Device: OnePlus 7/T/Pro
 Compiler: Dora Clang 14.0.0
 Branch: master
-Build Number: 2.2
+Build Number: 2.4
 ```
 ## Changelog
 ```
-2.2:
--Merge latest 4.14.246 kernel stable upstream
--Merge latest CAF tag LA.UM.9.1.r1-11100-SMxxx0.0 treewide
--Merge latest CAF tag LA.UM.9.1.r1-11100-SMxxx0.0 for qcacld-3.0, qca-wifi-host-cmn, fw-api and data (update WLAN drivers to 5.2.022.8Q)
--Merge ASB-2021-09-05_4.14-stable security tag for September
--Clean up FOD code and affine it's PM QoS requests to prime core
--Scheduler and cpuidle improvements
--Revert previous RCU patchset (caused crashdumps on OOS)
--Complete revisit of kbuild and Makefile to improve kernel performance with LTO 
--Enabled DCE and OPTIMIZE_INLINING
+2.4:
+-Merge latest 4.14.248 kernel stable upstream
+-Merge CAF tag LA.UM.9.15.r1-03600-KAMORTA.0 for qcacld-3.0, qca-wifi-host-cmn and fw-api (update WLAN drivers to 5.2.022.8Y)
+-Cleanup and rewrite FOD driver (thanks mvaisakh) and implement Devfreq boosting on FOD press (improved fingerprint reader performance)
+-Backport new Cpuidle TEO governor and use it by default (improved battery life)
+-Increase boosting on app launch
+-Micro-optimize cfq io scheduler
+-lib/sort backports
+-SLMK updates
+-Improve boot speed by suppressing output during kernel init
 -Built with latest Clang 14 (latest LLVM tc built with LTO, lld and Polly)
--Update cpuset for fg tasks
--Split perf critical flags into 3 standalone ones for each cluster (previously surfaceflinger and/or hwcomposer sometimes wouldn't be affined to prime because of this)
--Affine hwcomposer to prime cluster
--Hardcode drm/sde for sm8150
--Workqueue optimizations
--Set qs blur only for OOS
--TCP sched improvements for Westwood and BBR2
 ```
