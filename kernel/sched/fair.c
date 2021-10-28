@@ -194,13 +194,17 @@ unsigned int capacity_margin				= 1280;
 
 /* Migration margins */
 unsigned int sysctl_sched_capacity_margin_up[MAX_MARGIN_LEVELS] = {
-			[0 ... MAX_MARGIN_LEVELS-1] = 1280}; /* ~20% margin */
+			1280, 1625
+}; /* ~20% margin for small, ~37% margin for big */
 unsigned int sysctl_sched_capacity_margin_down[MAX_MARGIN_LEVELS] = {
-			[0 ... MAX_MARGIN_LEVELS-1] = 1575}; /* ~35% margin */
+			1796, 1442
+}; /* ~43% margin for big, ~29% margin for big+ */
 unsigned int sched_capacity_margin_up[NR_CPUS] = {
-			[0 ... NR_CPUS-1] = 1280}; /* ~20% margin */
+			1280, 1280, 1280, 1280, 1625, 1625, 1625, 1024
+}; /* ~20% margin for small, ~37% for big, not used for big+  */
 unsigned int sched_capacity_margin_down[NR_CPUS] = {
-			[0 ... NR_CPUS-1] = 1575}; /* ~35% margin */
+			1024, 1024, 1024, 1024, 1796, 1796, 1796, 1442
+}; /* Not used for small, ~43% margin for big, ~29% for big+ */
 
 /* 1ms default for 20ms window size scaled to 1024 */
 unsigned int sysctl_sched_min_task_util_for_boost = 51;
@@ -7949,14 +7953,9 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 		 * visiting other clusters. If the boost is ON_BIG we visit
 		 * next cluster if they are higher in capacity. If we are
 		 * not in any kind of boost, we break.
-		 *
-		 * And always visit higher capacity group, if solo cpu group
-		 * is not in idle.
 		 */
 		if (!prefer_idle && !boosted &&
-		    ((target_cpu != -1 && (sg->group_weight > 1 ||
-		     !next_group_higher_cap)) ||
-		     best_idle_cpu != -1) &&
+			(target_cpu != -1 || best_idle_cpu != -1) &&
 			(fbt_env->placement_boost == SCHED_BOOST_NONE ||
 			sched_boost() != FULL_THROTTLE_BOOST ||
 			(fbt_env->placement_boost == SCHED_BOOST_ON_BIG &&
