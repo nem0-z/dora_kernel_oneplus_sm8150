@@ -4949,7 +4949,6 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 {
 	int status = -EINVAL;
 	struct resource *res;
-	unsigned long irqflags = 0;
 
 	status = _register_device(device);
 	if (status)
@@ -5018,13 +5017,8 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 		goto error_pwrctrl_close;
 	}
 
-	irqflags = IRQF_TRIGGER_HIGH;
-	if (!strcmp(device->name, "kgsl-3d0")) {
-		irqflags |= IRQF_PERF_AFFINE;
-	}
-
 	status = devm_request_irq(device->dev, device->pwrctrl.interrupt_num,
-				  kgsl_irq_handler, irqflags,
+				  kgsl_irq_handler, IRQF_TRIGGER_HIGH | IRQF_PERF_AFFINE,
 				  device->name, device);
 	if (status) {
 		KGSL_DRV_ERR(device, "request_irq(%d) failed: %d\n",
@@ -5085,7 +5079,7 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 				PM_QOS_DEFAULT_VALUE);
 
 	device->events_wq = alloc_workqueue("kgsl-events",
-		WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_SYSFS | WQ_HIGHPRI, 0);
+		WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_SYSFS | WQ_HIGHPRI, 0);
 
 	/* Initialize the snapshot engine */
 	kgsl_device_snapshot_init(device);
@@ -5166,7 +5160,7 @@ static long kgsl_run_one_worker(struct kthread_worker *worker,
 {
 	kthread_init_worker(worker);
 	*thread = kthread_run_perf_critical(cpu_perf_mask,
-		kthread_worker_fn, worker, name);
+			kthread_worker_fn, worker, name);
 	if (IS_ERR(*thread)) {
 		pr_err("unable to start %s\n", name);
 		return PTR_ERR(thread);
@@ -5242,10 +5236,10 @@ static int __init kgsl_core_init(void)
 	INIT_LIST_HEAD(&kgsl_driver.pagetable_list);
 
 	kgsl_driver.workqueue = alloc_workqueue("kgsl-workqueue",
-		WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_SYSFS, 0);
+		WQ_HIGHPRI | WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_SYSFS, 0);
 
 	kgsl_driver.mem_workqueue = alloc_workqueue("kgsl-mementry",
-		WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_FREEZABLE, 0);
+		WQ_UNBOUND | WQ_MEM_RECLAIM, 0);
 
 	if (IS_ERR_VALUE(kgsl_run_one_worker(&kgsl_driver.worker,
 			&kgsl_driver.worker_thread,
