@@ -5,19 +5,24 @@ Type: Stable
 Device: OnePlus 7/T/Pro
 Compiler: Dora Clang 14.0.0
 Branch: master
-Build Number: 2.4
+Build Number: 2.7
 ```
 ## Changelog
 ```
-2.4:
--Merge latest 4.14.248 kernel stable upstream
--Merge CAF tag LA.UM.9.15.r1-03600-KAMORTA.0 for qcacld-3.0, qca-wifi-host-cmn and fw-api (update WLAN drivers to 5.2.022.8Y)
--Cleanup and rewrite FOD driver (thanks mvaisakh) and implement Devfreq boosting on FOD press (improved fingerprint reader performance)
--Backport new Cpuidle TEO governor and use it by default (improved battery life)
--Increase boosting on app launch
--Micro-optimize cfq io scheduler
--lib/sort backports
--SLMK updates
--Improve boot speed by suppressing output during kernel init
--Built with latest Clang 14 (latest LLVM tc built with LTO, lld and Polly)
+-2.7
+
+***From this release onwards, FOD has been reworked in order to be fully compatible and working with new A12 ROMs. It still might work on A11 ROMs and OOS 11, but to an extent. Because of that, there will be separate builds for A11 ROMs and OOS 11 without those changes, marked with "eleven" tag. So for example, for OOS 11, you would flash "Dora-Kernel-v2.7-eleven-sdcard_fs.zip".OOS 11 compatible build, so eleven-sdcardfs version is still staying as default for JSON configuration.***
+
+-Merge latest 4.14.256 kernel stable upstream
+-Merge latest CAF tag LA.UM.9.1.r1-11300-SMxxx0.0 treewide
+-Merge latest CAF tag LA.UM.9.1.r1-11300-SMxxx0.0 for qcacld-3.0, qca-wifi-host-cmn and fw-api (update WLAN drivers to 5.2.022.9N)
+-Switch to 250Hz timer and 16ms PELT halflife respectively
+-Improve idle power consumption
+-Various mm, qos, ion patches from Sultan
+-Locking/qspinlock backports
+-Modify scheduler capacity margins
+-Revisit of many old kgsl/msm patches
+-Move to f2fs late_initcall
+-Fix freezing issues for A12 ROMs
+-Built using latest Dora Clang toolchain built from LLVM upstream
 ```
