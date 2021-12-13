@@ -128,9 +128,6 @@ static struct sde_crtc_custom_events custom_events[] = {
 #define MAX_VPADDING_RATIO_M		63
 #define MAX_VPADDING_RATIO_N		15
 
-unsigned int is_a12 = 1;
-module_param(is_a12, uint, 0444);
-
 static inline struct sde_kms *_sde_crtc_get_kms(struct drm_crtc *crtc)
 {
 	struct msm_drm_private *priv;
@@ -3569,7 +3566,7 @@ int oneplus_aod_dc = 0;
 	dsi_connector = dsi_display->drm_conn;
 	mode_config = &drm_dev->mode_config;
 	sscanf(buf, "%du", &dim_status);
-	if ((oneplus_panel_status == 0) && is_a12 && !is_stock)
+	if (oneplus_panel_status == 0)
 		dim_status = 0;
 
 	if (dsi_display->panel->aod_status == 0 && (dim_status == 2)) {
