@@ -47,6 +47,7 @@
 #include <linux/msm-bus.h>
 #include "op_charge.h"
 #include <linux/oneplus/boot_mode.h>
+#include <linux/userland.h>
 
 #ifdef CONFIG_FORCE_FAST_CHARGE
 #include <linux/fastchg.h>
@@ -8001,6 +8002,11 @@ static void set_usb_switch(struct smb_charger *chg, bool enable)
 
 	if (!fast_charger) {
 		pr_err("no fast_charger register found\n");
+		return;
+	}
+
+	if (!is_stock && chg->pd_active) {
+		pr_info("%s:pd_active return\n", __func__);
 		return;
 	}
 
