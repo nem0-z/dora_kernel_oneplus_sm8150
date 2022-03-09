@@ -5219,12 +5219,12 @@ int dsi_panel_disable(struct dsi_panel *panel)
 		oneplus_dim_status = 0;
 		pr_err("Kill dim when panel goes off");
 		HBM_flag = false;
-	if(panel->aod_mode==2){
-			panel->aod_status=1;
-			}
-	if(panel->aod_mode==0){
-		panel->aod_status=0;
-		}
+
+	if (panel->aod_mode == 2)
+			panel->aod_status = 1;
+
+	if (panel->aod_mode == 0)
+		panel->aod_status = 0;
 
 		/*
 		 * Need to set IBB/AB regulator mode to STANDBY,

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 VERSION = 4
 PATCHLEVEL = 14
-SUBLEVEL = 268
+SUBLEVEL = 270
 EXTRAVERSION =
 NAME = Petit Gorille
 
@@ -686,7 +686,6 @@ LLVM_NM		:= llvm-nm
 export LLVM_AR LLVM_NM
 # Set O3 optimization level for LTO with most linkers
 LDFLAGS		+= --plugin-opt=O3
-LDFLAGS		+= --plugin-opt=-import-instr-limit=5
 endif
 
 # The arch Makefile can set ARCH_{CPP,A,C}FLAGS to override the default

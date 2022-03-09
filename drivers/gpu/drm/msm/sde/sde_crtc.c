@@ -3537,11 +3537,11 @@ extern int oneplus_panel_status;
 extern int backup_dim_status;
 extern bool backup_dimlayer_hbm;
 extern bool HBM_flag;
-extern int dsi_panel_tx_cmd_set (struct dsi_panel *panel, enum dsi_cmd_set_type type);
+extern int dsi_panel_tx_cmd_set(struct dsi_panel *panel, enum dsi_cmd_set_type type);
 int oneplus_dim_status = 0;
 int oneplus_aod_fod = 0;
 int oneplus_aod_dc = 0;
- ssize_t oneplus_display_notify_dim(struct device *dev,
+ssize_t oneplus_display_notify_dim(struct device *dev,
 		struct device_attribute *attr,
 		const char *buf, size_t count)
 {
