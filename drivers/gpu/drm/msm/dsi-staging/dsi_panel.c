@@ -21,6 +21,7 @@
 #include <video/mipi_display.h>
 #include <linux/project_info.h>
 #include <linux/oneplus/boot_mode.h>
+#include <linux/userland.h>
 
 #include "dsi_panel.h"
 #include "dsi_ctrl_hw.h"
@@ -5077,6 +5078,7 @@ bool aod_complete;
 bool real_aod_mode;
 extern bool oneplus_dimlayer_hbm_enable;
 bool backup_dimlayer_hbm = false;
+extern int oneplus_auth_status;
 extern int oneplus_dim_status;
 int backup_dim_status = 0;
 int dsi_panel_enable(struct dsi_panel *panel)
@@ -5124,9 +5126,21 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	panel->panel_initialized = true;
 	pr_debug("dsi_panel_enable aod_mode =%d\n",panel->aod_mode);
 	oneplus_panel_status = 2; // DISPLAY_POWER_ON
-	oneplus_dimlayer_hbm_enable = backup_dimlayer_hbm;
-	oneplus_dim_status = backup_dim_status;
-	pr_err("Restore dim when panel goes on");
+	if (is_a12 == 1 && is_stock == 0) {
+		if (oneplus_auth_status == 2) {
+			backup_dimlayer_hbm = 0;
+			backup_dim_status = 0;
+		} else if (oneplus_auth_status == 1) {
+			backup_dimlayer_hbm = 1;
+			backup_dim_status = 1;
+		}
+		oneplus_dimlayer_hbm_enable = backup_dimlayer_hbm;
+		oneplus_dim_status = backup_dim_status;
+		if (oneplus_auth_status != 2)
+			pr_err("Restore dim when panel goes on");
+		oneplus_auth_status = 0;
+	}
+
 
 	blank = MSM_DRM_BLANK_UNBLANK_CHARGE;
 	notifier_data.data = &blank;
@@ -5204,16 +5218,18 @@ int dsi_panel_disable(struct dsi_panel *panel)
 
 	/* Avoid sending panel off commands when ESD recovery is underway */
 	if (!atomic_read(&panel->esd_recovery_pending)) {
-		oneplus_dimlayer_hbm_enable = false;
-		oneplus_dim_status = 0;
-		pr_err("Kill dim when panel goes off");
-		HBM_flag = false;
-	if(panel->aod_mode==2){
-			panel->aod_status=1;
-			}
-	if(panel->aod_mode==0){
-		panel->aod_status=0;
+		if (is_a12 == 1 && is_stock == 0) {
+			oneplus_dimlayer_hbm_enable = false;
+			oneplus_dim_status = 0;
+			pr_err("Kill dim when panel goes off");
 		}
+		HBM_flag = false;
+
+	if (panel->aod_mode == 2)
+			panel->aod_status = 1;
+
+	if (panel->aod_mode == 0)
+		panel->aod_status = 0;
 
 		/*
 		 * Need to set IBB/AB regulator mode to STANDBY,

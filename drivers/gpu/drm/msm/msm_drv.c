@@ -49,6 +49,7 @@
 #include "msm_kms.h"
 #include "sde_wb.h"
 #include "sde_dbg.h"
+#include <drm/drm_client.h>
 
 /*
  * MSM driver version:
@@ -312,6 +313,7 @@ static int msm_drm_uninit(struct device *dev)
 	drm_mode_config_cleanup(ddev);
 
 	if (priv->registered) {
+		drm_client_dev_unregister(ddev);
 		drm_dev_unregister(ddev);
 		priv->registered = false;
 	}
@@ -428,7 +430,7 @@ static int msm_init_vram(struct drm_device *dev)
 		of_node_put(node);
 		if (ret)
 			return ret;
-		size = r.end - r.start;
+		size = r.end - r.start + 1;
 		DRM_INFO("using VRAM carveout: %lx@%pa\n", size, &r.start);
 
 		/* if we have no IOMMU, then we need to use carveout allocator.
@@ -1508,7 +1510,7 @@ void msm_mode_object_event_notify(struct drm_mode_object *obj,
 
 static int msm_release(struct inode *inode, struct file *filp)
 {
-	struct drm_file *file_priv = filp->private_data;
+	struct drm_file *file_priv;
 	struct drm_minor *minor;
 	struct drm_device *dev;
 	struct msm_drm_private *priv;
@@ -1520,6 +1522,7 @@ static int msm_release(struct inode *inode, struct file *filp)
 
 	mutex_lock(&msm_release_lock);
 
+	file_priv = filp->private_data;
 	if (!file_priv) {
 		ret = -EINVAL;
 		goto end;

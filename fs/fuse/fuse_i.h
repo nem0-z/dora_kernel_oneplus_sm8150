@@ -26,6 +26,7 @@
 #include <linux/xattr.h>
 #include <linux/pid_namespace.h>
 #include <linux/refcount.h>
+#include <linux/user_namespace.h>
 
 /** Max number of pages that can be used in a single read request */
 #define FUSE_MAX_PAGES_PER_REQ 32
@@ -117,9 +118,22 @@ enum {
 	FUSE_I_INIT_RDPLUS,
 	/** An operation changing file size is in progress  */
 	FUSE_I_SIZE_UNSTABLE,
+	/* Bad inode */
+	FUSE_I_BAD,
 };
 
 struct fuse_conn;
+
+/**
+ * Reference to lower filesystem file for read/write operations handled in
+ * passthrough mode.
+ * This struct also tracks the credentials to be used for handling read/write
+ * operations.
+ */
+struct fuse_passthrough {
+	struct file *filp;
+	struct cred *cred;
+};
 
 /** FUSE specific file data */
 struct fuse_file {
@@ -146,6 +160,9 @@ struct fuse_file {
 
 	/** Entry on inode's write_files list */
 	struct list_head write_entry;
+
+	/** Container for data related to the passthrough functionality */
+	struct fuse_passthrough passthrough;
 
 	/** RB node to be linked on fuse_conn->polled_files */
 	struct rb_node polled_node;
@@ -486,6 +503,9 @@ struct fuse_conn {
 	/** The pid namespace for this mount */
 	struct pid_namespace *pid_ns;
 
+	/** The user namespace for this mount */
+	struct user_namespace *user_ns;
+
 	/** Maximum read size */
 	unsigned max_read;
 
@@ -535,6 +555,9 @@ struct fuse_conn {
 	    abort and device release */
 	unsigned connected;
 
+	/** Connection aborted via sysfs */
+	bool aborted;
+
 	/** Connection failed (version mismatch).  Cannot race with
 	    setting other bitfields since it is only set once in INIT
 	    reply, before any other request, and never cleared */
@@ -545,6 +568,9 @@ struct fuse_conn {
 
 	/** Do readpages asynchronously?  Only set in INIT */
 	unsigned async_read:1;
+
+	/** Return an unique read error after abort.  Only set in INIT */
+	unsigned abort_err:1;
 
 	/** Do not send separate SETATTR request before open(O_TRUNC)  */
 	unsigned atomic_o_trunc:1;
@@ -650,6 +676,9 @@ struct fuse_conn {
 	/** Allow other than the mounter user to access the filesystem ? */
 	unsigned allow_other:1;
 
+	/** Passthrough mode for read/write IO */
+	unsigned int passthrough:1;
+
 	/** The number of requests waiting for completion */
 	atomic_t num_waiting;
 
@@ -688,6 +717,12 @@ struct fuse_conn {
 
 	/** List of device instances belonging to this connection */
 	struct list_head devices;
+
+	/** IDR for passthrough requests */
+	struct idr passthrough_req;
+
+	/** Protects passthrough_req */
+	spinlock_t passthrough_req_lock;
 };
 
 static inline struct fuse_conn *get_fuse_conn_super(struct super_block *sb)
@@ -708,6 +743,17 @@ static inline struct fuse_inode *get_fuse_inode(struct inode *inode)
 static inline u64 get_node_id(struct inode *inode)
 {
 	return get_fuse_inode(inode)->nodeid;
+}
+
+static inline void fuse_make_bad(struct inode *inode)
+{
+	remove_inode_hash(inode);
+	set_bit(FUSE_I_BAD, &get_fuse_inode(inode)->state);
+}
+
+static inline bool fuse_is_bad(struct inode *inode)
+{
+	return unlikely(test_bit(FUSE_I_BAD, &get_fuse_inode(inode)->state));
 }
 
 /** Device operations */
@@ -874,7 +920,7 @@ void fuse_request_send_background_locked(struct fuse_conn *fc,
 					 struct fuse_req *req);
 
 /* Abort all requests */
-void fuse_abort_conn(struct fuse_conn *fc);
+void fuse_abort_conn(struct fuse_conn *fc, bool is_abort);
 void fuse_wait_aborted(struct fuse_conn *fc);
 
 /**
@@ -894,7 +940,7 @@ struct fuse_conn *fuse_conn_get(struct fuse_conn *fc);
 /**
  * Initialize fuse_conn
  */
-void fuse_conn_init(struct fuse_conn *fc);
+void fuse_conn_init(struct fuse_conn *fc, struct user_namespace *user_ns);
 
 /**
  * Release reference to fuse_conn
@@ -1006,5 +1052,15 @@ struct posix_acl;
 struct posix_acl *fuse_get_acl(struct inode *inode, int type);
 int fuse_set_acl(struct inode *inode, struct posix_acl *acl, int type);
 extern int sct_mode;
+
+/* passthrough.c */
+int fuse_passthrough_open(struct fuse_dev *fud,
+			  struct fuse_passthrough_out *pto);
+int fuse_passthrough_setup(struct fuse_conn *fc, struct fuse_file *ff,
+			   struct fuse_open_out *openarg);
+void fuse_passthrough_release(struct fuse_passthrough *passthrough);
+ssize_t fuse_passthrough_read_iter(struct kiocb *iocb, struct iov_iter *to);
+ssize_t fuse_passthrough_write_iter(struct kiocb *iocb, struct iov_iter *from);
+ssize_t fuse_passthrough_mmap(struct file *file, struct vm_area_struct *vma);
 
 #endif /* _FS_FUSE_I_H */
