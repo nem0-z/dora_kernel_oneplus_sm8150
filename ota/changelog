@@ -3,26 +3,12 @@
 Kernel: Dora Kernel
 Type: Stable
 Device: OnePlus 7/T/Pro
-Compiler: Dora Clang 14.0.0
+Compiler: Dora Clang 15.0.0
 Branch: master
-Build Number: 2.7
+Build Number: 3.0
 ```
 ## Changelog
 ```
--2.7
-
-***From this release onwards, FOD has been reworked in order to be fully compatible and working with new A12 ROMs. It still might work on A11 ROMs and OOS 11, but to an extent. Because of that, there will be separate builds for A11 ROMs and OOS 11 without those changes, marked with "eleven" tag. So for example, for OOS 11, you would flash "Dora-Kernel-v2.7-eleven-sdcard_fs.zip".OOS 11 compatible build, so eleven-sdcardfs version is still staying as default for JSON configuration.***
-
--Merge latest 4.14.256 kernel stable upstream
--Merge latest CAF tag LA.UM.9.1.r1-11300-SMxxx0.0 treewide
--Merge latest CAF tag LA.UM.9.1.r1-11300-SMxxx0.0 for qcacld-3.0, qca-wifi-host-cmn and fw-api (update WLAN drivers to 5.2.022.9N)
--Switch to 250Hz timer and 16ms PELT halflife respectively
--Improve idle power consumption
--Various mm, qos, ion patches from Sultan
--Locking/qspinlock backports
--Modify scheduler capacity margins
--Revisit of many old kgsl/msm patches
--Move to f2fs late_initcall
--Fix freezing issues for A12 ROMs
--Built using latest Dora Clang toolchain built from LLVM upstream
+-3.0
+Check XDA and/or my GitHub for more info!
 ```
