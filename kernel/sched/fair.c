@@ -4307,8 +4307,7 @@ pick_next_entity(struct cfs_rq *cfs_rq, struct sched_entity *curr)
 				second = curr;
 		}
 
-		if (second && (sched_feat(STRICT_SKIP_BUDDY) ||
-		    wakeup_preempt_entity(second, left) < 1))
+		if (second && wakeup_preempt_entity(second, left) < 1)
 			se = second;
 	}
 
@@ -8524,7 +8523,7 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 		int _cpus_allowed = cpumask_test_cpu(cpu, &p->cpus_allowed);
 
 		if (sysctl_sched_sync_hint_enable && sync &&
-				_cpus_allowed &&
+				_cpus_allowed && 
 				wake_affine_idle(cpu, prev_cpu, sync) &&
 				cpu_is_in_target_set(p, cpu)) {
 			rcu_read_unlock();

@@ -1116,13 +1116,10 @@ static void kgsl_process_private_close(struct kgsl_device_private *dev_priv,
 	 * directories and garbage collect any outstanding resources
 	 */
 
-	process_release_memory(private);
+	kgsl_process_uninit_sysfs(private);
 
 	/* Release all syncsource objects from process private */
 	kgsl_syncsource_process_release_syncsources(private);
-
-	debugfs_remove_recursive(private->debug_root);
-	kgsl_process_uninit_sysfs(private);
 
 	/* When using global pagetables, do not detach global pagetable */
 	if (private->pagetable->name != KGSL_MMU_GLOBAL_PT)
@@ -1139,6 +1136,9 @@ static void kgsl_process_private_close(struct kgsl_device_private *dev_priv,
 	 * locks.
 	 */
 	mutex_unlock(&kgsl_driver.process_mutex);
+
+	process_release_memory(private);
+	debugfs_remove_recursive(private->debug_root);
 
 	kgsl_process_private_put(private);
 }
@@ -1179,7 +1179,8 @@ static int kgsl_close_device(struct kgsl_device *device)
 	int result = 0;
 
 	mutex_lock(&device->mutex);
-	if (device->open_count == 1) {
+	device->open_count--;
+	if (device->open_count == 0) {
 
 		/* Wait for the active count to go to 0 */
 		kgsl_active_count_wait(device, 0);
@@ -1189,18 +1190,6 @@ static int kgsl_close_device(struct kgsl_device *device)
 
 		result = kgsl_pwrctrl_change_state(device, KGSL_STATE_INIT);
 	}
-
-	/*
-	 * We must decrement the open_count after last_close() has finished.
-	 * This is because last_close() relinquishes device mutex while
-	 * waiting for active count to become 0. This opens up a window
-	 * where a new process can come in, see that open_count is 0, and
-	 * initiate a first_open(). This can potentially mess up the power
-	 * state machine. To avoid a first_open() from happening before
-	 * last_close() has finished, decrement the open_count after
-	 * last_close().
-	 */
-	device->open_count--;
 	mutex_unlock(&device->mutex);
 	return result;
 
@@ -1381,9 +1370,7 @@ kgsl_sharedmem_find(struct kgsl_process_private *private, uint64_t gpuaddr)
 	if (!private)
 		return NULL;
 
-	if (!kgsl_mmu_gpuaddr_in_range(private->pagetable, gpuaddr) &&
-		!kgsl_mmu_gpuaddr_in_range(
-			private->pagetable->mmu->securepagetable, gpuaddr))
+	if (!kgsl_mmu_gpuaddr_in_range(private->pagetable, gpuaddr))
 		return NULL;
 
 	spin_lock(&private->mem_lock);
