@@ -1944,7 +1944,11 @@ static int xfrm_get_policy(struct sk_buff *skb, struct nlmsghdr *nlh,
 		xp = xfrm_policy_bysel_ctx(net, &m, if_id, type, p->dir, &p->sel,
 					   ctx, delete, &err);
 		security_xfrm_policy_free(ctx);
+	}
 	if (xp == NULL)
+		return -ENOENT;
+
+	if (!delete) {
 		struct sk_buff *resp_skb;
 
 		resp_skb = xfrm_policy_netlink(skb, xp, p->dir, nlh->nlmsg_seq);
