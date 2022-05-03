@@ -4634,23 +4634,15 @@ static int cgroup_procs_write_permission(struct cgroup *src_cgrp,
 
 static int cgroup_attach_permissions(struct cgroup *src_cgrp,
 				     struct cgroup *dst_cgrp,
-				     struct super_block *sb, bool threadgroup)
-{ 
-	struct cgroup_file_ctx *ctx; 
+				     struct super_block *sb, bool threadgroup,
+					 struct cgroup_namespace *ns)
+{
 	int ret = 0;
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
 
-	ctx->ns = current->nsproxy->cgroup_ns;
-	get_cgroup_ns(ctx->ns);
-
-	if (ret) {
-		put_cgroup_ns(ctx->ns);
-		kfree(ctx);
-	}
-
-	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp, sb, ctx->ns);
+	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp, sb, ns);
 	if (ret)
 		return ret;
 
@@ -4694,9 +4686,8 @@ static ssize_t cgroup_procs_write(struct kernfs_open_file *of,
 	 * inherited fd attacks.
 	 */
 	saved_cred = override_creds(of->file->f_cred);
-	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp,
-					    of->file->f_path.dentry->d_sb,
-					    ctx->ns);
+	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp,
+					of->file->f_path.dentry->d_sb, true, ctx->ns);
 	revert_creds(saved_cred);
 	if (ret)
 		goto out_finish;
@@ -4748,9 +4739,9 @@ static ssize_t cgroup_threads_write(struct kernfs_open_file *of,
 	 * inherited fd attacks.
 	 */
 	saved_cred = override_creds(of->file->f_cred);
-	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp,
-					    of->file->f_path.dentry->d_sb,
-					    ctx->ns);
+	/* thread migrations follow the cgroup.procs delegation rule */
+	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp,
+					of->file->f_path.dentry->d_sb, false, ctx->ns);
 	revert_creds(saved_cred);
 	if (ret)
 		goto out_finish;
