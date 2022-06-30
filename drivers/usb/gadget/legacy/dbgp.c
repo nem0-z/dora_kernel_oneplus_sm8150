@@ -354,11 +354,8 @@ static int dbgp_setup(struct usb_gadget *gadget,
 		} else {
 			return err;
 		}
-	}
 
 
-	if (request == USB_REQ_GET_DESCRIPTOR) {
-		switch (value>>8) {
 		case USB_DT_DEVICE:
 			dev_dbg(&dbgp.gadget->dev, "setup: desc device\n");
 			len = sizeof device_desc;
